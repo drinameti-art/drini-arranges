@@ -9,6 +9,7 @@ const NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 export const noteName = (m: number) => `${NAMES[((m % 12) + 12) % 12]}${Math.floor(m / 12) - 1}`;
 
 const PIANO = /primo|secondo|piano|right hand|left hand|\brh\b|\blh\b/i;
+const CHOIR = /soprano|alto|tenor|bass(?!oon)|baritone/i;
 
 /** Pitch sounding in a line at time t (top or bottom note of a chord), or null for a rest. */
 function at(line: VoiceLine, t: number, pick: "top" | "bottom"): number | null {
@@ -42,31 +43,42 @@ export function checkVoiceLeading(lines: VoiceLine[], barLength: number): Issue[
   const pickFor = (i: number) => (i === lowest && used.length > 1 ? "bottom" : "top") as "top" | "bottom";
   const times = onsets(used);
 
-  // Parallel perfect fifths and octaves/unisons between any two lines.
-  for (let a = 0; a < used.length; a++) {
-    for (let b = a + 1; b < used.length; b++) {
-      const A = used[a]!, B = used[b]!;
-      let prev: { x: number; y: number } | null = null;
-      for (const t of times) {
-        const x = at(A, t, pickFor(a));
-        const y = at(B, t, pickFor(b));
-        if (x === null || y === null) { prev = null; continue; }
-        if (prev && (x !== prev.x || y !== prev.y)) {
-          const i1 = Math.abs(prev.x - prev.y), i2 = Math.abs(x - y);
-          const c1 = i1 % 12, c2 = i2 % 12;
-          const dx = x - prev.x, dy = y - prev.y;
-          const bothMove = dx !== 0 && dy !== 0;
-          const perfect = (c: number, i: number) => c === 7 || (c === 0 && i >= 0);
-          if (bothMove && Math.sign(dx) === Math.sign(dy) && c1 === c2 && perfect(c1, i1)) {
-            const kind = c1 === 7 ? "fifths" : i1 === 0 && i2 === 0 ? "unisons" : "octaves";
-            issues.push({
-              kind: "parallel",
-              bar: barOf(t),
-              text: `Parallel ${kind} between ${A.name} and ${B.name} in bar ${barOf(t)} (${noteName(prev.x)}–${noteName(prev.y)} to ${noteName(x)}–${noteName(y)})`,
-            });
-          }
-        }
-        prev = { x, y };
+  // Parallel perfect fifths and octaves/unisons.
+  // Calibrated on real arrangements: doubling a line in octaves or unisons for a stretch
+  // (cello + bass, violin 1 + viola, flute + piano) is deliberate, and inner parts in a
+  // rich texture may move in fifths. So outside strict four-part choir writing, only the
+  // outer voices are checked, and octaves count only as a single isolated parallel move.
+  const strict = used.length >= 3 && used.every((l) => CHOIR.test(l.name));
+  const pairs: [number, number][] = [];
+  if (strict) { for (let a = 0; a < used.length; a++) for (let b = a + 1; b < used.length; b++) pairs.push([a, b]); }
+  else if (used.length >= 2) pairs.push([0, lowest]);
+  for (const [a, b] of pairs) {
+    const A = used[a]!, B = used[b]!;
+    // sample both lines at every onset, dropping points where nothing changes
+    const pts: { t: number; x: number; y: number }[] = [];
+    for (const t of times) {
+      const x = at(A, t, pickFor(a));
+      const y = at(B, t, pickFor(b));
+      if (x === null || y === null) { pts.push({ t, x: NaN, y: NaN }); continue; }
+      const last = pts[pts.length - 1];
+      if (last && last.x === x && last.y === y) continue;
+      pts.push({ t, x, y });
+    }
+    const isOct = (p?: { x: number; y: number }) => !!p && !Number.isNaN(p.x) && Math.abs(p.x - p.y) % 12 === 0;
+    for (let k = 1; k < pts.length; k++) {
+      const p = pts[k - 1]!, q = pts[k]!;
+      if (Number.isNaN(p.x) || Number.isNaN(q.x)) continue;
+      const dx = q.x - p.x, dy = q.y - p.y;
+      if (dx === 0 || dy === 0 || Math.sign(dx) !== Math.sign(dy)) continue;
+      const i1 = Math.abs(p.x - p.y), i2 = Math.abs(q.x - q.y);
+      if (i1 % 12 !== i2 % 12) continue;
+      if (i1 % 12 === 7) {
+        issues.push({ kind: "parallel", bar: barOf(q.t), text: `Parallel fifths between ${A.name} and ${B.name} in bar ${barOf(q.t)} (${noteName(p.x)}–${noteName(p.y)} to ${noteName(q.x)}–${noteName(q.y)})` });
+      } else if (i1 % 12 === 0) {
+        // a doubled line keeps going in octaves; flag only a lone parallel move
+        if (!strict && (isOct(pts[k - 2]) || isOct(pts[k + 1]))) continue;
+        const kind = i1 === 0 && i2 === 0 ? "unisons" : "octaves";
+        issues.push({ kind: "parallel", bar: barOf(q.t), text: `Parallel ${kind} between ${A.name} and ${B.name} in bar ${barOf(q.t)} (${noteName(p.x)}–${noteName(p.y)} to ${noteName(q.x)}–${noteName(q.y)})` });
       }
     }
   }

@@ -16,7 +16,7 @@ export type ArrangeRequest = {
 };
 
 const selects = [
-  { id: "ensemble", label: "Ensemble", options: ["Piano 4 hands", "Solo piano", "String quartet", "SATB choir", "SA choir + piano", "Guitar", "Lead sheet"] },
+  { id: "ensemble", label: "Ensemble", options: ["Piano 4 hands", "Solo piano", "Piano + strings (2 violins, viola)", "String quartet", "String orchestra", "Flute + piano", "Wind quartet", "SATB choir", "SA choir + piano", "Guitar", "Lead sheet"] },
   { id: "level", label: "Level", options: ["Easy", "Intermediate", "Advanced"] },
   { id: "key", label: "Key", options: ["Keep original", "C major", "G major", "D major", "A major", "F major", "Bb major", "Eb major", "A minor", "E minor", "D minor", "G minor"] },
   { id: "style", label: "Style", options: ["Lyrical", "Classical", "Pop", "Jazz", "Folk"] },

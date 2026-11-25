@@ -21,6 +21,17 @@ describe("checkVoiceLeading", () => {
     expect(checkVoiceLeading([line("Primo", [67, 69]), line("Secondo", [43, 43])], 1)).toEqual([]);
   });
 
+  it("treats a line doubled in octaves as deliberate doubling", () => {
+    const v1 = line("Violin 1", [72, 74, 76, 77]);
+    const vc = line("Cello", [48, 50, 52, 53]);
+    expect(checkVoiceLeading([v1, vc], 1)).toEqual([]);
+  });
+
+  it("still flags a single parallel octave between the outer voices", () => {
+    const issues = checkVoiceLeading([line("Violin 1", [76, 72, 74, 79]), line("Cello", [55, 48, 50, 52])], 1);
+    expect(issues.map((i) => i.text).join(" ")).toMatch(/Parallel octaves/);
+  });
+
   it("finds voice crossing and wide spacing in a choir", () => {
     const kinds = checkVoiceLeading(
       [line("Soprano", [72, 72]), line("Alto", [55, 74]), line("Tenor", [52, 52]), line("Bass", [48, 48])],
