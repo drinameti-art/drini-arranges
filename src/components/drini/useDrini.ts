@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { arrange as arrangeFn, revise as reviseFn } from "@/lib/drini.functions";
+import { arrange as arrangeFn, arrangeFromFile as arrangeFileFn, revise as reviseFn } from "@/lib/drini.functions";
 import { checkAbc, type Check } from "@/lib/abc-check";
 import { sampleScoreAbc } from "./data";
 import type { ArrangeRequest } from "./ArrangeForm";
@@ -38,6 +38,7 @@ const defaultRequest: ArrangeRequest = {
   key: "G major",
   style: "Lyrical",
   melody: null,
+  upload: null,
 };
 
 const FAIL = "I couldn't finish that one — try again?";
@@ -114,6 +115,22 @@ export function useDrini() {
           `Arrange this melody, transcribed from the user's recording (note, octave and length): ${m.text}. ` +
           `It sounds like ${m.key} at about ${m.bpm} BPM. Keep the melody's notes and rhythm (tidy obvious transcription slips), ` +
           `and use its key unless the requested key below says otherwise ("Keep original" means use the melody's key). ${text}`;
+      } else if (r.mode === "upload") {
+        const src = r.upload;
+        if (!src) { say("Upload a score or a photo of the music first, then press Arrange."); return; }
+        setArranging(true);
+        try {
+          const base = { ensemble: r.ensemble, level: r.level, key: r.key, style: r.style, description: text.slice(0, 2000) };
+          const res = src.kind === "abc"
+            ? await arrangeFn({ data: { ...base, source: src.abc.slice(0, 30000) } })
+            : await arrangeFileFn({ data: { ...base, data: src.data, mediaType: src.mediaType as "image/jpeg" | "application/pdf", fileName: src.fileName.slice(0, 200) } });
+          await apply(res, { id: newId(), ensemble: r.ensemble, level: r.level });
+        } catch {
+          say("I couldn't arrange from that file. A clearer photo, or a MuseScore/MusicXML file, works best.");
+        } finally {
+          setArranging(false);
+        }
+        return;
       } else if (!text) {
         say("Tell me what to arrange first: describe the piece, the instruments and the feel.");
         return;

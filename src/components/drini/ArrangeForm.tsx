@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Mic, Square, Upload } from "lucide-react";
+import { Camera, FileMusic, Loader2, Mic, Square, Upload, X } from "lucide-react";
 import { Spark } from "./Logo";
 import { Waveform } from "./Waveform";
 import { formatTime, loadMelody, useMelodyRecorder, type StoredMelody } from "./useMelodyRecorder";
+import { ScoreSheet } from "./ScoreSheet";
+import { importScoreFile, type ScoreSource } from "@/lib/score-import";
 
 export type ArrangeRequest = {
-  mode: "text" | "audio";
+  mode: "text" | "audio" | "upload";
   prompt: string;
   ensemble: string;
   level: string;
   key: string;
   style: string;
   melody: StoredMelody | null;
+  upload: ScoreSource | null;
 };
 
 const selects = [
@@ -39,7 +42,24 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text", preset =
     key: "G major",
     style: "Lyrical",
     melody: null,
+    upload: null,
   });
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const onFile = async (f: File | undefined) => {
+    if (!f) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const src = await importScoreFile(f);
+      setReq((r) => ({ ...r, upload: src }));
+    } catch (e) {
+      setReq((r) => ({ ...r, upload: null }));
+      setImportError(e instanceof Error ? e.message : "I couldn't read that file.");
+    } finally {
+      setImporting(false);
+    }
+  };
   const rec = useMelodyRecorder();
   const [presetTitle, setPresetTitle] = useState<string | null>(null);
   // A template from the Templates page fills the form once.
@@ -64,16 +84,16 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text", preset =
         </p>
       )}
 
-      <div role="tablist" className="mt-4 grid grid-cols-2 rounded-xl bg-beige p-1">
-        {(["text", "audio"] as const).map((m) => (
+      <div role="tablist" className="mt-4 grid grid-cols-3 rounded-xl bg-beige p-1">
+        {(["text", "audio", "upload"] as const).map((m) => (
           <button
             key={m}
             role="tab"
             aria-selected={req.mode === m}
             onClick={() => setReq({ ...req, mode: m })}
-            className={`min-h-11 rounded-[10px] text-sm font-medium transition-colors ${req.mode === m ? "bg-paper text-ink shadow-sm" : "text-graphite hover:text-ink"}`}
+            className={`min-h-11 rounded-[10px] px-1 text-xs font-medium transition-colors sm:text-sm ${req.mode === m ? "bg-paper text-ink shadow-sm" : "text-graphite hover:text-ink"}`}
           >
-            {m === "text" ? "Describe in text" : "Upload or hum audio"}
+            {m === "text" ? "Describe in text" : m === "audio" ? "Hum or record" : "Upload sheet music"}
           </button>
         ))}
       </div>
@@ -103,6 +123,57 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text", preset =
                 </button>
               ))}
             </div>
+          </div>
+        ) : req.mode === "upload" ? (
+          <div className="space-y-4">
+            <div
+              className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-input bg-background/50 px-4 py-6 text-center sm:flex-row sm:items-start sm:text-left"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); void onFile(e.dataTransfer.files?.[0]); }}
+            >
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-beige text-primary">
+                {importing ? <Loader2 className="h-6 w-6 animate-spin" /> : <FileMusic className="h-7 w-7" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-graphite" aria-live="polite">
+                  {importing ? <span className="font-medium text-ink">Reading your score…</span>
+                    : importError ? <span className="text-warning">{importError}</span>
+                    : req.upload ? <><span className="font-medium text-ink">{req.upload.fileName}</span> · {req.upload.info}</>
+                    : <>Drop a score here, choose a file or take a photo. MuseScore (.mscz), MusicXML, MIDI, PDF, ABC or a clear photo of the page.</>}
+                </p>
+                <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                  <label className="btn btn-ghost cursor-pointer">
+                    <Upload className="h-4 w-4" />Choose a file
+                    <input type="file" className="sr-only" accept=".mscz,.mscx,.musicxml,.xml,.mxl,.mid,.midi,.abc,.pdf,image/*"
+                      onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
+                  </label>
+                  <label className="btn btn-ghost cursor-pointer">
+                    <Camera className="h-4 w-4" />Take a photo
+                    <input type="file" className="sr-only" accept="image/*" capture="environment"
+                      onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
+                  </label>
+                  {req.upload && (
+                    <button type="button" className="btn btn-ghost" onClick={() => setReq({ ...req, upload: null })}><X className="h-4 w-4" />Remove</button>
+                  )}
+                </div>
+              </div>
+            </div>
+            {req.upload?.kind === "abc" && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-graphite">What Drini read from your file (first bars):</p>
+                <div className="max-h-56 overflow-auto rounded-xl border border-border bg-paper px-2 py-2">
+                  <div className="min-w-[640px]"><ScoreSheet abc={previewAbc(req.upload.abc)} /></div>
+                </div>
+              </div>
+            )}
+            {req.upload?.kind === "image" && req.upload.previewUrl && (
+              <img src={req.upload.previewUrl} alt="Your sheet music" className="max-h-56 rounded-xl border border-border object-contain" />
+            )}
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-ink">Anything Drini should know? (optional)</span>
+              <input className="field" value={req.prompt} onChange={(e) => setReq({ ...req, prompt: e.target.value })}
+                placeholder="For example: make it easier, keep the original key, give the melody to the viola" />
+            </label>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-input bg-background/50 px-4 py-6 text-center sm:flex-row sm:items-start sm:text-left">
@@ -167,11 +238,19 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text", preset =
 
       <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-graphite">Output: score · PDF · MIDI · ABC</p>
-        <button className="btn btn-primary px-5" disabled={loading || rec.recording || rec.status === "analysing"} onClick={() => onArrange({ ...req, melody })}>
+        <button className="btn btn-primary px-5" disabled={loading || rec.recording || rec.status === "analysing" || importing} onClick={() => onArrange({ ...req, melody })}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Spark />}
           {loading ? "Drini is arranging…" : "Arrange with Drini"}
         </button>
       </div>
     </section>
   );
+}
+
+/** Only the first 8 bars of each part, so the preview stays small. */
+function previewAbc(abc: string) {
+  return abc
+    .split("\n")
+    .map((l) => (l.startsWith("[V:") ? l.split("|").slice(0, 8).join("|") + "|" : l))
+    .join("\n");
 }
