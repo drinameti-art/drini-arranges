@@ -1,0 +1,77 @@
+import { createOpenAI } from "@ai-sdk/openai";
+import { APICallError, Output, streamText, type ModelMessage } from "ai";
+import { z } from "zod";
+
+export const DRINI_SYSTEM_PROMPT = `You are Drini, an expert music arranger and music teacher. You write arrangements as valid ABC notation 2.1 that abcjs can render and play.
+
+Output rules:
+- Always include X:1, T:, M:, L:1/4 (or 1/8), Q:, K:.
+- Use \`%%score\` with one V: line per part. Each V: line has \`clef=\` and \`name=\`; for piano 4 hands use Primo (treble) and Secondo (bass).
+- Every voice has the same number of bars, and every bar adds up exactly to the meter.
+- End the piece on the tonic with a final barline |].
+- Default length 16 bars unless asked; never more than 32.
+
+Musical rules:
+- Keep each part in a comfortable range:
+  - Soprano C4–G5, Alto G3–D5, Tenor C3–G4, Bass E2–C4
+  - Violin G3–A6, Viola C3–E5, Cello C2–A4, Guitar E2–B5 (written)
+  - Piano: each hand within an octave span
+- Avoid parallel 5ths and octaves between outer voices.
+- Resolve the leading tone up to the tonic at cadences.
+- Use clear cadences: I – IV – V – I, with V–I at phrase ends.
+- Level Easy: quarter and half notes mostly, no more than a five-finger position per phrase, few accidentals, no leaps larger than a sixth.
+- Level Intermediate: add eighth notes, simple syncopation, moderate leaps.
+- Level Advanced: free.
+- Respect the requested key, ensemble and style.
+- In \`notes\`, flag anything a teacher should know, for example a wide leap or a hand position change.`;
+
+const MODEL = "openai/gpt-6-astra";
+
+export const arrangementSchema = z.object({
+  title: z.string(),
+  key: z.string(),
+  meter: z.string(),
+  bars: z.number(),
+  abc: z.string().describe("Full ABC 2.1 score"),
+  summary: z.string().describe("1–2 sentences in Drini's voice for the chat"),
+  notes: z.array(z.object({ bar: z.number(), text: z.string() })),
+});
+export type Arrangement = z.infer<typeof arrangementSchema>;
+export type DriniResult = { ok: true; arrangement: Arrangement } | { ok: false; error: string };
+
+export async function runDrini(messages: ModelMessage[]): Promise<DriniResult> {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) return { ok: false, error: "I'm not set up to write music yet — the AI key is missing." };
+  const provider = createOpenAI({
+    baseURL: "https://ai.gateway.lovable.dev/v1",
+    apiKey,
+    headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+  });
+  try {
+    const result = streamText({
+      model: provider.responses(MODEL),
+      system: DRINI_SYSTEM_PROMPT,
+      messages,
+      output: Output.object({ schema: arrangementSchema }),
+      maxRetries: 0,
+      providerOptions: {
+        openai: {
+          forceReasoning: true,
+          reasoningEffort: "medium",
+          reasoningSummary: "auto",
+          store: false,
+          include: ["reasoning.encrypted_content"],
+        },
+      },
+    });
+    const arrangement = await result.output;
+    return { ok: true, arrangement };
+  } catch (err) {
+    console.error("Drini AI call failed", err);
+    const status = APICallError.isInstance(err) ? err.statusCode : (err as { cause?: { statusCode?: number } })?.cause?.statusCode;
+    if (status === 429) return { ok: false, error: "I'm getting a lot of requests right now. Give me a moment and try again?" };
+    if (status === 402) return { ok: false, error: "The AI credits for this workspace have run out. Add credits in Lovable settings and I'll be ready again." };
+    if (status === 403) return { ok: false, error: "I'm not allowed to use the AI service for this workspace right now. A workspace admin can check the AI settings." };
+    return { ok: false, error: "I couldn't finish that one — try again?" };
+  }
+}
