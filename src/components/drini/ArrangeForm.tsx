@@ -16,9 +16,9 @@ export type ArrangeRequest = {
 };
 
 const selects = [
-  { id: "ensemble", label: "Ensemble", options: ["Piano 4 hands", "Solo piano", "String quartet", "SATB choir", "Guitar"] },
+  { id: "ensemble", label: "Ensemble", options: ["Piano 4 hands", "Solo piano", "String quartet", "SATB choir", "SA choir + piano", "Guitar", "Lead sheet"] },
   { id: "level", label: "Level", options: ["Easy", "Intermediate", "Advanced"] },
-  { id: "key", label: "Key", options: ["G major", "Keep original", "C major", "D minor"] },
+  { id: "key", label: "Key", options: ["Keep original", "C major", "G major", "D major", "A major", "F major", "Bb major", "Eb major", "A minor", "E minor", "D minor", "G minor"] },
   { id: "style", label: "Style", options: ["Lyrical", "Classical", "Pop", "Jazz", "Folk"] },
 ] as const;
 
@@ -28,7 +28,9 @@ const tryPrompts = [
   "SATB hymn, 16 bars, D major",
 ];
 
-export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { loading: boolean; onArrange: (r: ArrangeRequest) => void; initialMode?: ArrangeRequest["mode"] }) {
+type Preset = { id: string; title: string; request: Partial<ArrangeRequest> };
+
+export function ArrangeForm({ loading, onArrange, initialMode = "text", preset = null }: { loading: boolean; onArrange: (r: ArrangeRequest) => void; initialMode?: ArrangeRequest["mode"]; preset?: Preset | null }) {
   const [req, setReq] = useState<ArrangeRequest>({
     mode: initialMode,
     prompt: "Turn my folk melody into an easy piano duet, 4 hands, for two sisters. Keep the secondo simple, gentle and flowing, about 2 minutes.",
@@ -39,6 +41,14 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
     melody: null,
   });
   const rec = useMelodyRecorder();
+  const [presetTitle, setPresetTitle] = useState<string | null>(null);
+  // A template from the Templates page fills the form once.
+  useEffect(() => {
+    if (!preset) return;
+    setReq((r) => ({ ...r, ...preset.request }));
+    setPresetTitle(preset.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset?.id]);
   // A melody recorded on the /record screen (or earlier) shows up here until a new one replaces it.
   const [stored, setStored] = useState<StoredMelody | null>(null);
   useEffect(() => { setStored(loadMelody()); }, []);
@@ -47,6 +57,12 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
   return (
     <section className="card-paper p-5 md:p-6">
       <h2 className="text-2xl text-ink">What should Drini arrange?</h2>
+      {presetTitle && (
+        <p className="mt-2 text-sm text-graphite">
+          Template: <span className="font-medium text-primary">{presetTitle}</span>. Change anything you like, then press Arrange.
+          {req.mode === "audio" && " Record or upload your melody first."}
+        </p>
+      )}
 
       <div role="tablist" className="mt-4 grid grid-cols-2 rounded-xl bg-beige p-1">
         {(["text", "audio"] as const).map((m) => (

@@ -16,6 +16,8 @@ Musical rules:
   - Soprano C4–G5, Alto G3–D5, Tenor C3–G4, Bass E2–C4
   - Violin G3–A6, Viola C3–E5, Cello C2–A4, Guitar E2–B5 (written)
   - Piano: each hand within an octave span
+  - SA choir + piano: two treble voices (Soprano, Alto, both C4–D5) plus a piano part (right and left hand)
+  - Lead sheet: a single melody staff with chord symbols in quotes above the notes, e.g. "G" "D7"
 - Avoid parallel 5ths and octaves between outer voices.
 - Resolve the leading tone up to the tonic at cadences.
 - Use clear cadences: I – IV – V – I, with V–I at phrase ends.

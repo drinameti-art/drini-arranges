@@ -8,6 +8,7 @@ import { ScoreCard } from "@/components/drini/ScoreCard";
 import { DriniChat } from "@/components/drini/DriniChat";
 import { useDrini } from "@/components/drini/useDrini";
 import { findScore } from "@/components/drini/library";
+import { findTemplate } from "@/components/drini/templates";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,16 +25,19 @@ export const Route = createFileRoute("/")({
     ...(s["tab"] === "audio" ? { tab: "audio" as const } : {}),
     ...(s["arrange"] === true || s["arrange"] === "true" ? { arrange: true } : {}),
     ...(typeof s["open"] === "string" ? { open: s["open"] } : {}),
+    ...(typeof s["template"] === "string" ? { template: s["template"] } : {}),
   }),
   component: Studio,
 });
 
-type StudioSearch = { tab?: "audio"; arrange?: boolean; open?: string };
+type StudioSearch = { tab?: "audio"; arrange?: boolean; open?: string; template?: string };
 
 function Studio() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
   const drini = useDrini();
+  const template = search.template ? findTemplate(search.template) : null;
+  const preset = template ? { id: template.id, title: template.title, request: template.request } : null;
   const arrange = drini.arrange;
 
   const handedOff = useRef(false);
@@ -66,7 +70,7 @@ function Studio() {
           }}
         />
         <div className="min-w-0 space-y-6">
-          <ArrangeForm loading={drini.arranging} onArrange={(r) => void arrange(r)} initialMode={search.tab === "audio" ? "audio" : "text"} />
+          <ArrangeForm loading={drini.arranging} onArrange={(r) => void arrange(r)} initialMode={search.tab === "audio" || template?.request.mode === "audio" ? "audio" : "text"} preset={preset} />
           <ScoreCard score={drini.score} checks={drini.checks} draft={drini.draft} refreshing={drini.busy} onTranspose={(n, label) => void drini.transpose(n, label)} />
         </div>
         <div className="lg:sticky lg:top-6 lg:self-start"><DriniChat msgs={drini.msgs} busy={drini.busy} onSend={(t) => void drini.revise(t)} /></div>
