@@ -1,4 +1,6 @@
 // Client-side sanity checks for Drini's ABC output (parse, bar lengths, voice alignment, ranges).
+import { checkVoiceLeading, keyAccidentals, makeSpeller, type NoteEvent } from "./harmony";
+
 export type Check = { ok: boolean; label: string };
 export type CheckResult = { checks: Check[]; problems: string[] };
 
@@ -41,24 +43,38 @@ export function checkAbcWith(abcjs: any, abc: string): CheckResult {
   const mf = tune.getMeterFraction?.() ?? { num: 4, den: 4 };
   const barLen = mf.num / mf.den;
   const names = voiceNames(abc);
-  const voices: { bars: number[]; acc: number; pitches: { p: number; bar: number }[] }[] = [];
+  const voices: {
+    bars: number[]; acc: number; pitches: { p: number; bar: number }[];
+    t: number; events: NoteEvent[]; speller: ReturnType<typeof makeSpeller> | null;
+  }[] = [];
 
   for (const line of tune.lines) {
     if (!line.staff) continue;
     let idx = 0;
     for (const st of line.staff) {
       for (const voice of st.voices ?? []) {
-        const rec = (voices[idx] ??= { bars: [], acc: 0, pitches: [] });
+        const rec = (voices[idx] ??= { bars: [], acc: 0, pitches: [], t: 0, events: [], speller: null });
+        rec.speller ??= makeSpeller(keyAccidentals(st.key?.accidentals));
         let mult = 1;
         for (const el of voice) {
           if (el.el_type === "note" && el.duration) {
             if (el.startTriplet) mult = el.tripletMultiplier ?? 1;
-            rec.acc += el.duration * mult;
-            for (const p of el.pitches ?? []) rec.pitches.push({ p: p.pitch, bar: rec.bars.length + 1 });
+            const dur = el.duration * mult;
+            const midis: number[] = [];
+            for (const p of el.pitches ?? []) {
+              rec.pitches.push({ p: p.pitch, bar: rec.bars.length + 1 });
+              midis.push(rec.speller.midi(p.pitch, p.accidental));
+            }
+            rec.events.push({ t: rec.t, dur, midis: el.rest ? [] : midis });
+            rec.t += dur;
+            rec.acc += dur;
             if (el.endTriplet) mult = 1;
-          } else if (el.el_type === "bar" && rec.acc > 0) {
-            rec.bars.push(rec.acc);
-            rec.acc = 0;
+          } else if (el.el_type === "bar") {
+            rec.speller.newBar();
+            if (rec.acc > 0) {
+              rec.bars.push(rec.acc);
+              rec.acc = 0;
+            }
           }
         }
         idx++;
@@ -100,6 +116,26 @@ export function checkAbcWith(abcjs: any, abc: string): CheckResult {
     problems.push(`Range problems: ${rangeIssues.join("; ")}.`);
     checks.push({ ok: false, label: rangeIssues[0] ?? "Range issue" });
   } else checks.push({ ok: true, label: "Ranges checked" });
+
+  // Voice leading: parallels, crossing, spacing, piano stretches.
+  if (voices.length >= 1) {
+    const issues = checkVoiceLeading(
+      voices.map((v, i) => ({ name: names[i] ?? `Voice ${i + 1}`, events: v.events })),
+      barLen,
+    );
+    const first = (k: string) => issues.find((x) => x.kind === k);
+    const par = first("parallel");
+    if (voices.length >= 2) {
+      checks.push(par ? { ok: false, label: `Parallel 5ths / 8ves in bar ${par.bar}` } : { ok: true, label: "No parallel 5ths / 8ves" });
+    }
+    const cross = first("crossing");
+    if (cross) checks.push({ ok: false, label: `Voices cross in bar ${cross.bar}` });
+    const space = first("spacing");
+    if (space) checks.push({ ok: false, label: `Wide spacing in bar ${space.bar}` });
+    const stretch = first("stretch");
+    if (stretch) checks.push({ ok: false, label: `Wide hand stretch in bar ${stretch.bar}` });
+    if (issues.length) problems.push(`Voice-leading problems: ${issues.slice(0, 6).map((x) => x.text).join("; ")}.`);
+  }
 
   return { checks, problems };
 }
