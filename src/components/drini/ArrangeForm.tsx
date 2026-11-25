@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Loader2, Mic } from "lucide-react";
 import { Spark } from "./Logo";
 import { Waveform } from "./Waveform";
@@ -19,9 +20,9 @@ const selects = [
   { id: "style", label: "Style", options: ["Lyrical", "Classical", "Pop", "Jazz", "Folk"] },
 ] as const;
 
-export function ArrangeForm({ loading, onArrange }: { loading: boolean; onArrange: (r: ArrangeRequest) => void }) {
+export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { loading: boolean; onArrange: (r: ArrangeRequest) => void; initialMode?: ArrangeRequest["mode"] }) {
   const [req, setReq] = useState<ArrangeRequest>({
-    mode: "text",
+    mode: initialMode,
     prompt: "Turn my folk melody into an easy piano duet, 4 hands, for two sisters. Keep the secondo simple, gentle and flowing, about 2 minutes.",
     ensemble: "Piano 4 hands",
     level: "Easy",
@@ -73,6 +74,7 @@ export function ArrangeForm({ loading, onArrange }: { loading: boolean; onArrang
               <p className="mt-2 text-sm text-graphite">
                 <span className="font-medium text-ink">melody_hum.m4a · 0:42</span> — Drop a file or press record. A single melody works best.
               </p>
+              <Link to="/record" className="btn btn-outline mt-3"><Mic className="h-4 w-4" />Hum on your phone</Link>
             </div>
           </div>
         )}

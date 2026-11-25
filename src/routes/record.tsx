@@ -64,7 +64,7 @@ function Record() {
       </div>
 
       <div className="flex-1" />
-      <Link to="/" className="btn btn-primary mt-8 h-14 w-full text-base"><Spark />Arrange with Drini</Link>
+      <Link to="/" search={{ tab: "audio", arrange: true }} className="btn btn-primary mt-8 h-14 w-full text-base"><Spark />Arrange with Drini</Link>
     </main>
   );
 }

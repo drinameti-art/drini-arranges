@@ -141,4 +141,5 @@
 
 /* abcjs */
 .score-sheet svg { max-width: 100%; height: auto; }
+.score-sheet .abcjs-playing,
 .score-sheet .abcjs-note_selected, .score-sheet .abcjs-highlight { fill: var(--color-primary); }

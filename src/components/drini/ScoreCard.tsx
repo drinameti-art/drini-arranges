@@ -5,13 +5,15 @@ import { ScoreSheet, type ScoreSheetHandle } from "./ScoreSheet";
 import { sampleScoreAbc } from "./data";
 
 export function ScoreCard({ draft, refreshing }: { draft: number; refreshing: boolean }) {
+  const [started, setStarted] = useState(false);
   const sheet = useRef<ScoreSheetHandle>(null);
   const [playing, setPlaying] = useState(false);
 
   const toggle = async () => {
-    if (playing) { sheet.current?.stop(); setPlaying(false); return; }
+    if (playing) { sheet.current?.pause(); setPlaying(false); return; }
     setPlaying(true);
-    await sheet.current?.play();
+    if (started) sheet.current?.resume();
+    else { setStarted(true); await sheet.current?.play(); }
   };
 
   return (
@@ -33,7 +35,7 @@ export function ScoreCard({ draft, refreshing }: { draft: number; refreshing: bo
       </div>
 
       <div className="mt-5 overflow-x-auto rounded-2xl border border-border bg-paper px-2 py-3">
-        <ScoreSheet ref={sheet} abc={sampleScoreAbc} highlightBar={2} highlightLabel="Bar 3 · Drini's note" onEnded={() => setPlaying(false)} />
+        <div className="min-w-[680px]"><ScoreSheet ref={sheet} abc={sampleScoreAbc} highlightBar={2} highlightLabel="Bar 3 · Drini's note" onEnded={() => { setPlaying(false); setStarted(false); }} /></div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

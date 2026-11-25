@@ -1,6 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
 
-export type ScoreSheetHandle = { play: () => Promise<void>; stop: () => void };
+export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
 
 type Props = { abc: string; highlightBar?: number; highlightLabel?: string; onEnded?: () => void };
 
@@ -11,7 +11,7 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
 ) {
   const el = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state = useRef<{ abcjs?: any; visual?: any; synth?: any }>({});
+  const state = useRef<{ abcjs?: any; visual?: any; synth?: any; timer?: any }>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +31,7 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
     return () => {
       cancelled = true;
       state.current.synth?.stop();
+      state.current.timer?.stop();
     };
   }, [abc, highlightBar, highlightLabel]);
 
@@ -38,14 +39,39 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
     async play() {
       const { abcjs, visual } = state.current;
       if (!abcjs?.synth?.supportsAudio()) return;
+      // AudioContext must be created inside the user's click.
+      const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const audioContext = new AC();
+      await audioContext.resume();
+      const clear = () => el.current?.querySelectorAll(".abcjs-playing").forEach((n) => n.classList.remove("abcjs-playing"));
+      const timer = new abcjs.TimingCallbacks(visual, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        eventCallback: (ev: any) => {
+          clear();
+          if (!ev) { onEnded?.(); return; }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (ev.elements ?? []).flat().forEach((n: any) => n.classList?.add("abcjs-playing"));
+        },
+      });
       const synth = new abcjs.synth.CreateSynth();
-      await synth.init({ visualObj: visual, options: { onEnded } });
+      await synth.init({ visualObj: visual, audioContext, millisecondsPerMeasure: visual.millisecondsPerMeasure() });
       await synth.prime();
       state.current.synth = synth;
+      state.current.timer = timer;
       synth.start();
+      timer.start();
+    },
+    pause() {
+      state.current.synth?.pause();
+      state.current.timer?.pause();
+    },
+    resume() {
+      state.current.synth?.resume();
+      state.current.timer?.start();
     },
     stop() {
       state.current.synth?.stop();
+      state.current.timer?.stop();
     },
   }));
 
