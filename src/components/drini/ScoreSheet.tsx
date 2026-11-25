@@ -2,14 +2,16 @@ import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
 
 export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
 
-type Props = { abc: string; highlightBar?: number; highlightLabel?: string; onEnded?: () => void };
+export type Highlight = { bar: number; label: string };
+type Props = { abc: string; highlights?: Highlight[]; onEnded?: () => void };
 
 /** Renders ABC notation with abcjs (loaded client-side only) and exposes synth playback. */
 export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreSheet(
-  { abc, highlightBar, highlightLabel, onEnded },
+  { abc, highlights = [], onEnded },
   ref,
 ) {
   const el = useRef<HTMLDivElement>(null);
+  const highlightKey = highlights.map((h) => `${h.bar}:${h.label}`).join("|");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const state = useRef<{ abcjs?: any; visual?: any; synth?: any; timer?: any }>({});
 
@@ -26,14 +28,15 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
         foregroundColor: "#17162B",
       });
       state.current = { abcjs, visual };
-      if (highlightBar !== undefined) drawHighlight(el.current, highlightBar, highlightLabel ?? "");
+      for (const h of highlights) drawHighlight(el.current, h.bar, h.label);
     });
     return () => {
       cancelled = true;
       state.current.synth?.stop();
       state.current.timer?.stop();
     };
-  }, [abc, highlightBar, highlightLabel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abc, highlightKey]);
 
   useImperativeHandle(ref, () => ({
     async play() {
@@ -78,17 +81,27 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
   return <div ref={el} className="score-sheet w-full" />;
 });
 
+/** Draws a soft burgundy box around one bar (1-based) across all staves, with a small label. */
 function drawHighlight(root: HTMLElement, bar: number, label: string) {
   const svg = root.querySelector("svg");
-  if (!svg) return;
-  const els = Array.from(svg.querySelectorAll<SVGGraphicsElement>(`.abcjs-m${bar}`));
+  if (!svg || bar < 1) return;
+  const idx = bar - 1;
+  // abcjs numbers measures from 0: "abcjs-mm{n}" counts through the whole tune, "abcjs-m{n}" restarts on each line.
+  let els = Array.from(svg.querySelectorAll<SVGGraphicsElement>(`.abcjs-mm${idx}`));
+  if (!els.length) els = Array.from(svg.querySelectorAll<SVGGraphicsElement>(`.abcjs-m${idx}`));
   if (!els.length) return;
+  // If the bar sits on a later line, only box the elements on the first line it appears on.
+  const lineOf = (e: Element) => /abcjs-l(\d+)/.exec(e.getAttribute("class") ?? "")?.[1];
+  const firstLine = lineOf(els[0]!);
+  if (firstLine !== undefined) els = els.filter((e) => lineOf(e) === firstLine);
   let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
   for (const e of els) {
     const b = e.getBBox();
+    if (!b.width && !b.height) continue;
     x1 = Math.min(x1, b.x); y1 = Math.min(y1, b.y);
     x2 = Math.max(x2, b.x + b.width); y2 = Math.max(y2, b.y + b.height);
   }
+  if (!Number.isFinite(x1)) return;
   const ns = "http://www.w3.org/2000/svg";
   const rect = document.createElementNS(ns, "rect");
   Object.entries({ x: x1 - 10, y: y1 - 10, width: x2 - x1 + 20, height: y2 - y1 + 20, rx: 8, fill: "#7B1F3A", "fill-opacity": "0.08", stroke: "#7B1F3A", "stroke-opacity": "0.25" })

@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Mic } from "lucide-react";
 import { PageShell } from "@/components/drini/TopBar";
 import { RecentList } from "@/components/drini/RecentList";
 import { ArrangeForm } from "@/components/drini/ArrangeForm";
 import { ScoreCard } from "@/components/drini/ScoreCard";
 import { DriniChat } from "@/components/drini/DriniChat";
+import { useDrini } from "@/components/drini/useDrini";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,20 +31,14 @@ type StudioSearch = { tab?: "audio"; arrange?: boolean };
 function Studio() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
-  const [loading, setLoading] = useState(false);
-  const [draft, setDraft] = useState(2);
-
-  // Placeholder: swap for the real arranging call later.
-  const arrange = () => {
-    setLoading(true);
-    setTimeout(() => { setLoading(false); setDraft((d) => d + 1); }, 1800);
-  };
+  const drini = useDrini();
+  const arrange = drini.arrange;
 
   const handedOff = useRef(false);
   useEffect(() => {
     if (!search.arrange || handedOff.current) return;
     handedOff.current = true;
-    arrange();
+    void arrange();
     void navigate({ search: { tab: "audio" }, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -53,10 +48,10 @@ function Studio() {
       <main className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 md:px-6 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
         <RecentList />
         <div className="min-w-0 space-y-6">
-          <ArrangeForm loading={loading} onArrange={arrange} initialMode={search.tab === "audio" ? "audio" : "text"} />
-          <ScoreCard draft={draft} refreshing={loading} />
+          <ArrangeForm loading={drini.arranging} onArrange={(r) => void arrange(r)} initialMode={search.tab === "audio" ? "audio" : "text"} />
+          <ScoreCard score={drini.score} checks={drini.checks} draft={drini.draft} refreshing={drini.busy} />
         </div>
-        <div className="lg:sticky lg:top-6 lg:self-start"><DriniChat /></div>
+        <div className="lg:sticky lg:top-6 lg:self-start"><DriniChat msgs={drini.msgs} busy={drini.busy} onSend={(t) => void drini.revise(t)} /></div>
       </main>
       <Link
         to="/record"

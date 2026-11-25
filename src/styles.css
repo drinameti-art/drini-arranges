@@ -143,3 +143,13 @@
 .score-sheet svg { max-width: 100%; height: auto; }
 .score-sheet .abcjs-playing,
 .score-sheet .abcjs-note_selected, .score-sheet .abcjs-highlight { fill: var(--color-primary); }
+
+/* Export PDF: print only the score card */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0 auto auto 0; width: 100%; border: none; box-shadow: none; opacity: 1 !important; }
+  .print-area .score-scroll { overflow: visible; border: none; }
+  .print-area .score-scroll > div { min-width: 0; }
+  .no-print { display: none !important; }
+}

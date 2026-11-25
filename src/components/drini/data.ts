@@ -18,9 +18,3 @@ V:S clef=bass name="Secondo"
 [V:P] G A B d | c B A G | B g e d | c B A2 | G A B d | e d c B | A B c A | G4 |]
 [V:S] G,2 D,2 | G,2 D,2 | G,2 D,2 | D,2 D,2 | G,2 D,2 | G,2 G,2 | D,2 D,2 | G,4 |]
 `;
-
-export const cannedReplies = [
-  "Got it. I've updated the draft — have a listen and tell me what you'd like next.",
-  "Done. I kept the melody intact and adjusted only the accompaniment.",
-  "Good idea. I've marked the change in the score so you can compare it with Draft 2.",
-];

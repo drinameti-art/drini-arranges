@@ -20,6 +20,12 @@ const selects = [
   { id: "style", label: "Style", options: ["Lyrical", "Classical", "Pop", "Jazz", "Folk"] },
 ] as const;
 
+const tryPrompts = [
+  "Happy Birthday for string quartet",
+  "Easy piano solo, lullaby in F major",
+  "SATB hymn, 16 bars, D major",
+];
+
 export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { loading: boolean; onArrange: (r: ArrangeRequest) => void; initialMode?: ArrangeRequest["mode"] }) {
   const [req, setReq] = useState<ArrangeRequest>({
     mode: initialMode,
@@ -51,6 +57,7 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
 
       <div className="mt-5">
         {req.mode === "text" ? (
+          <div>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-ink">Describe the piece, the instruments and the feel</span>
             <textarea
@@ -59,6 +66,20 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
               onChange={(e) => setReq({ ...req, prompt: e.target.value })}
             />
           </label>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-graphite">Try:</span>
+              {tryPrompts.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setReq({ ...req, prompt: t })}
+                  className="pill border border-input bg-paper text-ink transition-colors hover:border-primary hover:text-primary"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-input bg-background/50 px-4 py-6 text-center sm:flex-row sm:text-left">
             <button
