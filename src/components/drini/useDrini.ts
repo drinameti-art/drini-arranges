@@ -3,6 +3,7 @@ import { arrange as arrangeFn, revise as reviseFn } from "@/lib/drini.functions"
 import { checkAbc, type Check } from "@/lib/abc-check";
 import { sampleScoreAbc } from "./data";
 import type { ArrangeRequest } from "./ArrangeForm";
+import { loadEnsemble, loadMelody } from "./useMelodyRecorder";
 
 type DriniResult = Awaited<ReturnType<typeof arrangeFn>>;
 type Arrangement = Extract<DriniResult, { ok: true }>["arrangement"];
@@ -27,8 +28,6 @@ const initialMsgs: Msg[] = [
   },
 ];
 
-const HUM_SAMPLE = "Arrange this hummed melody: G A B D C B A G (likely G major, about 96 BPM).";
-
 const defaultRequest: ArrangeRequest = {
   mode: "audio",
   prompt: "",
@@ -36,6 +35,7 @@ const defaultRequest: ArrangeRequest = {
   level: "Easy",
   key: "G major",
   style: "Lyrical",
+  melody: null,
 };
 
 const FAIL = "I couldn't finish that one — try again?";
@@ -95,9 +95,20 @@ export function useDrini() {
 
   const arrange = useCallback(
     async (req?: ArrangeRequest) => {
-      const r = req ?? defaultRequest;
+      const r = req ?? { ...defaultRequest, ensemble: loadEnsemble() ?? defaultRequest.ensemble };
       const text = r.prompt.trim();
-      const description = r.mode === "audio" || !text ? `${HUM_SAMPLE} ${text}`.trim() : text;
+      let description = text;
+      if (r.mode === "audio") {
+        const m = r.melody ?? loadMelody();
+        if (!m) { say("Record or upload a melody first, then press Arrange and I'll get to work."); return; }
+        description =
+          `Arrange this melody, transcribed from the user's recording (note, octave and length): ${m.text}. ` +
+          `It sounds like ${m.key} at about ${m.bpm} BPM. Keep the melody's notes and rhythm (tidy obvious transcription slips), ` +
+          `and use its key unless the requested key below says otherwise ("Keep original" means use the melody's key). ${text}`;
+      } else if (!text) {
+        say("Tell me what to arrange first: describe the piece, the instruments and the feel.");
+        return;
+      }
       setArranging(true);
       try {
         const res = await arrangeFn({

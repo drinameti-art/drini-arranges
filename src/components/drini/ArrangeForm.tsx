@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Mic } from "lucide-react";
+import { Loader2, Mic, Square, Upload } from "lucide-react";
 import { Spark } from "./Logo";
 import { Waveform } from "./Waveform";
+import { formatTime, loadMelody, useMelodyRecorder, type StoredMelody } from "./useMelodyRecorder";
 
 export type ArrangeRequest = {
   mode: "text" | "audio";
@@ -11,6 +12,7 @@ export type ArrangeRequest = {
   level: string;
   key: string;
   style: string;
+  melody: StoredMelody | null;
 };
 
 const selects = [
@@ -34,8 +36,13 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
     level: "Easy",
     key: "G major",
     style: "Lyrical",
+    melody: null,
   });
-  const [recording, setRecording] = useState(false);
+  const rec = useMelodyRecorder();
+  // A melody recorded on the /record screen (or earlier) shows up here until a new one replaces it.
+  const [stored, setStored] = useState<StoredMelody | null>(null);
+  useEffect(() => { setStored(loadMelody()); }, []);
+  const melody: StoredMelody | null = rec.melody ?? (rec.status === "idle" ? stored : null);
 
   return (
     <section className="card-paper p-5 md:p-6">
@@ -81,21 +88,46 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-input bg-background/50 px-4 py-6 text-center sm:flex-row sm:text-left">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-input bg-background/50 px-4 py-6 text-center sm:flex-row sm:items-start sm:text-left">
             <button
-              onClick={() => setRecording((r) => !r)}
-              className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover"
-              aria-label="Record"
+              type="button"
+              onClick={() => (rec.recording ? rec.stop() : void rec.start())}
+              disabled={rec.status === "analysing"}
+              className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+              aria-label={rec.recording ? "Stop recording" : "Record"}
             >
-              <Mic className="h-5 w-5" />
-              <span className="text-[10px] font-medium">{recording ? "Stop" : "Record"}</span>
+              {rec.recording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-5 w-5" />}
+              <span className="text-[10px] font-medium">{rec.recording ? "Stop" : "Record"}</span>
             </button>
-            <div className="flex-1">
-              <Waveform animated={recording} className="h-10 justify-start" bars={44} />
-              <p className="mt-2 text-sm text-graphite">
-                <span className="font-medium text-ink">melody_hum.m4a · 0:42</span> — Drop a file or press record. A single melody works best.
+            <div className="min-w-0 flex-1">
+              <Waveform animated={rec.recording || rec.status === "analysing"} className="h-10 justify-start" bars={44} />
+              <p className="mt-2 text-sm text-graphite" aria-live="polite">
+                {rec.status === "recording" && <><span className="font-medium text-ink">Listening… {formatTime(rec.seconds)}</span> — hum one line, then press Stop (up to 0:30).</>}
+                {rec.status === "analysing" && <span className="font-medium text-ink">Finding the notes…</span>}
+                {rec.status === "error" && <span className="text-warning">{rec.error}</span>}
+                {rec.status !== "recording" && rec.status !== "analysing" && rec.status !== "error" && (melody
+                  ? <><span className="font-medium text-ink">{rec.fileName ?? "Your melody"} · {melody.names.length} notes</span> — likely {melody.key}, about {melody.bpm} BPM.</>
+                  : <>Press record and hum one line, or upload a recording. A single melody works best.</>)}
               </p>
-              <Link to="/record" className="btn btn-outline mt-3"><Mic className="h-4 w-4" />Hum on your phone</Link>
+              {melody && rec.status !== "recording" && rec.status !== "analysing" && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {melody.names.slice(0, 32).map((n, i) => (
+                    <span key={i} className="flex h-8 min-w-7 items-center justify-center rounded-lg bg-beige px-1.5 font-display text-sm font-semibold text-ink">{n}</span>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <label className="btn btn-ghost cursor-pointer">
+                  <Upload className="h-4 w-4" />Upload a recording
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    className="sr-only"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) rec.upload(f); e.target.value = ""; }}
+                  />
+                </label>
+                <Link to="/record" className="btn btn-outline"><Mic className="h-4 w-4" />Hum on your phone</Link>
+              </div>
             </div>
           </div>
         )}
@@ -118,7 +150,7 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
 
       <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-graphite">Output: score + parts · PDF · MusicXML · MIDI</p>
-        <button className="btn btn-primary px-5" disabled={loading} onClick={() => onArrange(req)}>
+        <button className="btn btn-primary px-5" disabled={loading || rec.recording || rec.status === "analysing"} onClick={() => onArrange({ ...req, melody })}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Spark />}
           {loading ? "Drini is arranging…" : "Arrange with Drini"}
         </button>
