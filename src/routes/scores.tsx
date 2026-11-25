@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/drini/TopBar";
+import { relativeDay, useLibrary } from "@/components/drini/library";
 
 export const Route = createFileRoute("/scores")({
   head: () => ({
@@ -15,15 +16,6 @@ export const Route = createFileRoute("/scores")({
   component: Scores,
 });
 
-const scores = [
-  { title: "Folk melody", ens: "Piano 4 hands", meta: "G major · 32 bars · Easy", date: "Today" },
-  { title: "Hummed theme", ens: "String quartet", meta: "D minor · 48 bars · Intermediate", date: "Yesterday" },
-  { title: "Morning song", ens: "Children's choir, SA + piano", meta: "F major · 24 bars · Easy", date: "Mon" },
-  { title: "Pop ballad", ens: "Solo guitar", meta: "E major · 40 bars · Intermediate", date: "Nov 20" },
-  { title: "Wedding processional", ens: "String quartet", meta: "D major · 36 bars · Advanced", date: "Nov 14" },
-  { title: "Lullaby for Ana", ens: "Solo piano", meta: "C major · 16 bars · Easy", date: "Nov 9" },
-];
-
 function Staff() {
   return (
     <svg viewBox="0 0 200 60" className="h-16 w-full text-graphite" aria-hidden>
@@ -36,21 +28,32 @@ function Staff() {
 }
 
 function Scores() {
+  const scores = useLibrary();
   return (
     <PageShell>
       <main className="mx-auto max-w-6xl px-4 py-10 md:px-6">
         <h1 className="text-4xl text-ink">My scores</h1>
-        <p className="mt-2 text-graphite">Every arrangement Drini has written for you.</p>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {scores.map((s) => (
-            <Link to="/" key={s.title} className="card-paper group p-5 transition-colors hover:border-primary/40">
-              <div className="rounded-xl bg-background px-4 py-3"><Staff /></div>
-              <h2 className="mt-4 text-xl text-ink group-hover:text-primary">{s.title}</h2>
-              <p className="text-sm text-ink">{s.ens}</p>
-              <div className="mt-3 flex items-center justify-between text-xs text-graphite"><span>{s.meta}</span><span>{s.date}</span></div>
-            </Link>
-          ))}
-        </div>
+        <p className="mt-2 text-graphite">Every arrangement Drini has written for you, saved in this browser.</p>
+        {scores.length === 0 ? (
+          <div className="card-paper mt-8 flex flex-col items-start gap-4 p-8">
+            <p className="text-ink">No scores yet. Describe a piece or hum a melody, and Drini's arrangements will be kept here.</p>
+            <Link to="/" className="btn btn-primary">Go to the Studio</Link>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {scores.map((s) => (
+              <Link to="/" search={{ open: s.id }} key={s.id} className="card-paper group p-5 transition-colors hover:border-primary/40">
+                <div className="rounded-xl bg-background px-4 py-3"><Staff /></div>
+                <h2 className="mt-4 text-xl text-ink group-hover:text-primary">{s.title}</h2>
+                <p className="text-sm text-ink">{s.ensemble || "Arrangement"}</p>
+                <div className="mt-3 flex items-center justify-between text-xs text-graphite">
+                  <span>{[s.key, `${s.bars} bars`, s.level].filter(Boolean).join(" · ")}</span>
+                  <span>{relativeDay(s.createdAt)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </PageShell>
   );

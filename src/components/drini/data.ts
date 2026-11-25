@@ -1,12 +1,3 @@
-export type Arrangement = { id: string; title: string; meta: string };
-
-export const recentArrangements: Arrangement[] = [
-  { id: "folk", title: "Folk melody, piano 4 hands", meta: "Today · G major · Easy" },
-  { id: "quartet", title: "Hummed theme, string quartet", meta: "Yesterday · D minor" },
-  { id: "choir", title: "Children's choir, SA + piano", meta: "Mon · F major" },
-  { id: "ballad", title: "Pop ballad, solo guitar", meta: "Nov 20 · E major" },
-];
-
 export const sampleScoreAbc = `X:1
 M:4/4
 L:1/4

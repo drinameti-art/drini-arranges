@@ -68,6 +68,7 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-ink">Describe the piece, the instruments and the feel</span>
             <textarea
+              id="drini-prompt"
               className="field min-h-28 resize-y leading-relaxed"
               value={req.prompt}
               onChange={(e) => setReq({ ...req, prompt: e.target.value })}
@@ -149,7 +150,7 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text" }: { load
       </div>
 
       <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-graphite">Output: score + parts · PDF · MusicXML · MIDI</p>
+        <p className="text-xs text-graphite">Output: score · PDF · MIDI · ABC</p>
         <button className="btn btn-primary px-5" disabled={loading || rec.recording || rec.status === "analysing"} onClick={() => onArrange({ ...req, melody })}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Spark />}
           {loading ? "Drini is arranging…" : "Arrange with Drini"}

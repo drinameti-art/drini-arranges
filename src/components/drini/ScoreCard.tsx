@@ -1,13 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpDown, FileCode2, FileDown, Pause, Play, Check, AlertTriangle } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download, FileDown, Pause, Play, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import type { Check as CheckItem } from "@/lib/abc-check";
 import { ScoreSheet, type ScoreSheetHandle } from "./ScoreSheet";
+import { downloadAbc, downloadMidi, fileSlug } from "@/lib/abc-tools";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Score } from "./useDrini";
 
-type Props = { score: Score; checks: CheckItem[]; draft: number; refreshing: boolean };
+type Props = {
+  score: Score;
+  checks: CheckItem[];
+  draft: number;
+  refreshing: boolean;
+  onTranspose: (semitones: number, label: string) => void;
+};
 
-export function ScoreCard({ score, checks, draft, refreshing }: Props) {
+const steps = [
+  { n: 1, label: "up a semitone" },
+  { n: -1, label: "down a semitone" },
+  { n: 2, label: "up a tone" },
+  { n: -2, label: "down a tone" },
+  { n: 12, label: "up an octave" },
+  { n: -12, label: "down an octave" },
+];
+
+export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Props) {
   const [started, setStarted] = useState(false);
   const sheet = useRef<ScoreSheetHandle>(null);
   const [playing, setPlaying] = useState(false);
@@ -25,15 +44,13 @@ export function ScoreCard({ score, checks, draft, refreshing }: Props) {
     else { setStarted(true); await sheet.current?.play(); }
   };
 
-  const downloadAbc = () => {
-    const blob = new Blob([score.abc], { type: "text/vnd.abc;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${slug(score.title) || "drini-score"}.abc`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast("Downloaded as ABC. MusicXML export is coming soon.");
+  const midi = async () => {
+    try {
+      await downloadMidi(score.abc, fileSlug(score.title));
+      toast("MIDI downloaded. Open it in MuseScore, Sibelius or GarageBand to edit the notation.");
+    } catch {
+      toast("Couldn't make the MIDI file for this score.");
+    }
   };
 
   const highlights = score.notes.map((n) => ({ bar: n.bar, label: `Bar ${n.bar} · Drini's note` }));
@@ -52,8 +69,30 @@ export function ScoreCard({ score, checks, draft, refreshing }: Props) {
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             {playing ? "Pause" : "Play"}
           </button>
-          <button className="btn btn-ghost" onClick={() => toast("Transpose is coming soon")}><ArrowUpDown className="h-4 w-4" />Transpose</button>
-          <button className="btn btn-ghost" onClick={downloadAbc}><FileCode2 className="h-4 w-4" />MusicXML</button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="btn btn-ghost" disabled={refreshing}><ArrowUpDown className="h-4 w-4" />Transpose<ChevronDown className="h-3.5 w-3.5 opacity-60" /></button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuLabel>Now in {score.key}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {steps.map((st) => (
+                <DropdownMenuItem key={st.n} onSelect={() => onTranspose(st.n, st.label)}>
+                  {st.label.charAt(0).toUpperCase() + st.label.slice(1)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="btn btn-ghost"><Download className="h-4 w-4" />Download<ChevronDown className="h-3.5 w-3.5 opacity-60" /></button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onSelect={() => void midi()}>MIDI (.mid): opens in MuseScore, Sibelius</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => downloadAbc(score.abc, fileSlug(score.title))}>ABC notation (.abc)</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => window.print()}>PDF (print the score)</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button className="btn btn-ink" onClick={() => window.print()}><FileDown className="h-4 w-4" />Export PDF</button>
         </div>
       </div>
@@ -80,8 +119,4 @@ export function ScoreCard({ score, checks, draft, refreshing }: Props) {
       </div>
     </section>
   );
-}
-
-function slug(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 }
