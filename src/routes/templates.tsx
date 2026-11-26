@@ -37,7 +37,7 @@ function Templates() {
               <h2 className="mt-4 text-xl text-ink">{text.title}</h2>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-graphite">{text.desc}</p>
               <div className="mt-4 flex gap-2">{text.tags.map((g) => <span key={g} className="pill bg-beige text-ink">{g}</span>)}</div>
-              <Link to="/" search={{ template: t.id }} className="btn btn-outline mt-5">{tx("tp.use")}</Link>
+              <Link to="/studio" search={{ template: t.id }} className="btn btn-outline mt-5">{tx("tp.use")}</Link>
             </div>
             );
           })}

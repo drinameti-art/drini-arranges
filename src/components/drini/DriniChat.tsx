@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Spark } from "./Logo";
-import type { Msg } from "./useDrini";
+import type { Draft, Msg } from "./useDrini";
 import { useLang } from "@/lib/i18n";
 
-export function DriniChat({ msgs, busy, onSend }: { msgs: Msg[]; busy: boolean; onSend: (text: string) => void }) {
+type Props = {
+  msgs: Msg[]; busy: boolean; onSend: (text: string) => void;
+  /** Versions of the score on screen; clicking one goes back to it. */
+  drafts?: Draft[]; current?: number; onRestore?: (n: number) => void;
+  /** Suggestions that fit the score on screen. */
+  chips?: string[];
+};
+
+export function DriniChat({ msgs, busy, onSend, drafts = [], current, onRestore, chips }: Props) {
   const [text, setText] = useState("");
   const { t } = useLang();
   const end = useRef<HTMLDivElement>(null);
@@ -28,7 +36,33 @@ export function DriniChat({ msgs, busy, onSend }: { msgs: Msg[]; busy: boolean; 
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto py-4 lg:max-h-[560px]">
+      {drafts.length > 1 && (
+        <div className="border-b border-cream/10 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cream/50">{t("chat.drafts")}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {drafts.map((d) => {
+              const on = d.n === current;
+              return (
+                <button
+                  key={d.n}
+                  type="button"
+                  disabled={busy || on}
+                  onClick={() => onRestore?.(d.n)}
+                  title={d.label || d.score.title}
+                  className={`rounded-full px-2.5 py-1 text-xs transition-colors ${on ? "bg-gold text-ink" : "border border-cream/20 text-cream/80 hover:border-gold hover:text-gold"}`}
+                >
+                  {d.n}{on ? ` · ${t("chat.current")}` : ""}
+                </button>
+              );
+            })}
+          </div>
+          {drafts.find((d) => d.n === current)?.label && (
+            <p className="mt-2 line-clamp-2 text-xs text-cream/55">“{drafts.find((d) => d.n === current)?.label}”</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex-1 space-y-3 overflow-y-auto py-4 lg:max-h-[520px]">
         {msgs.map((m, i) => (
           <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
             <p className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.from === "user" ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-ink-soft text-cream"}`}>
@@ -41,7 +75,7 @@ export function DriniChat({ msgs, busy, onSend }: { msgs: Msg[]; busy: boolean; 
       </div>
 
       <div className="flex flex-wrap gap-2 pb-3">
-        {[t("chat.q1"), t("chat.q2"), t("chat.q3")].map((q) => (
+        {(chips?.length ? chips : [t("chat.q1"), t("chat.q2"), t("chat.q3")]).map((q) => (
           <button key={q} disabled={busy} onClick={() => send(q)} className="pill disabled:opacity-50 min-h-9 border border-cream/20 text-cream/90 transition-colors hover:border-gold hover:text-gold">{q}</button>
         ))}
       </div>

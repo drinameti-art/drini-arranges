@@ -39,12 +39,12 @@ function Scores() {
         {scores.length === 0 ? (
           <div className="card-paper mt-8 flex flex-col items-start gap-4 p-8">
             <p className="text-ink">{t("sc.empty")}</p>
-            <Link to="/" className="btn btn-primary">{t("sc.go")}</Link>
+            <Link to="/studio" className="btn btn-primary">{t("sc.go")}</Link>
           </div>
         ) : (
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {scores.map((s) => (
-              <Link to="/" search={{ open: s.id }} key={s.id} className="card-paper group p-5 transition-colors hover:border-primary/40">
+              <Link to="/studio" search={{ open: s.id }} key={s.id} className="card-paper group p-5 transition-colors hover:border-primary/40">
                 <div className="rounded-xl bg-background px-4 py-3"><Staff /></div>
                 <h2 className="mt-4 text-xl text-ink group-hover:text-primary">{s.title}</h2>
                 <p className="text-sm text-ink">{optionLabel(s.ensemble, lang)}</p>

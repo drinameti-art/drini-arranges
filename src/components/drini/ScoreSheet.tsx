@@ -4,23 +4,34 @@ import { pedalPiano, withCountIn, withoutVoices } from "@/lib/abc-parts";
 
 /** Practice settings for playback: tempo in percent, voices to mute, bars to loop, a count-in bar. */
 export type PlayOptions = { tempo?: number; muted?: string[]; loop?: { from: number; to: number } | null; countIn?: boolean };
-export type ScoreSheetHandle = { play: (opts?: PlayOptions) => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
+export type ScoreSheetHandle = {
+  play: (opts?: PlayOptions) => Promise<void>; pause: () => void; resume: () => void; stop: () => void;
+  /** Jump to a point of the piece, 0 = start, 1 = end (while playing). */
+  seek: (fraction: number) => void;
+};
 
 // Only one score plays at a time: starting one silences any older player (a previous draft, the upload preview…).
 let activeStop: (() => void) | null = null;
 
 export type Highlight = { bar: number; label: string };
-type Props = { abc: string; highlights?: Highlight[]; onEnded?: () => void };
+type Props = {
+  abc: string; highlights?: Highlight[]; onEnded?: () => void;
+  /** Called during playback with how far it has got (0–1). */
+  onProgress?: (fraction: number) => void;
+  /** Scroll the page and the score box so the notes being played stay in view. */
+  follow?: boolean;
+};
 
 /** Renders ABC notation with abcjs (loaded client-side only) and exposes synth playback. */
 export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreSheet(
-  { abc, highlights = [], onEnded },
+  { abc, highlights = [], onEnded, onProgress, follow = true },
   ref,
 ) {
   const el = useRef<HTMLDivElement>(null);
   const highlightKey = highlights.map((h) => `${h.bar}:${h.label}`).join("|");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state = useRef<{ abcjs?: any; visual?: any; synth?: any; timer?: any; abc?: string }>({});
+  const state = useRef<{ abcjs?: any; visual?: any; synth?: any; timer?: any; abc?: string; total?: number | undefined }>({});
+  const lastTop = useRef<number | null>(null);
   const ready = useRef<Promise<void>>(Promise.resolve());
   const abcNow = useRef(abc);
   abcNow.current = abc;
@@ -84,12 +95,22 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
           clear();
           if (!ev) {
             if (loop) { jumpBack(); synth.start(); timer.start(); return; }
+            onProgress?.(0);
+            lastTop.current = null;
             onEnded?.();
             return;
           }
           if (loop && ev.milliseconds / 1000 >= loopEnd - 0.005) { jumpBack(); return; }
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (ev.elements ?? []).flat().forEach((n: any) => n.classList?.add("abcjs-playing"));
+          const playingNow: any[] = (ev.elements ?? []).flat();
+          playingNow.forEach((n) => n.classList?.add("abcjs-playing"));
+          const total = timer.lastMoment || state.current.total || 0;
+          if (total > 0) onProgress?.(Math.min(1, ev.milliseconds / total));
+          // follow the music: when playback moves to a new line, bring it into view
+          if (follow && playingNow[0] && ev.top !== lastTop.current) {
+            lastTop.current = ev.top;
+            playingNow[0].scrollIntoView?.({ behavior: "smooth", block: "nearest", inline: "center" });
+          }
         },
       });
       const base = { visualObj: audioVisual, audioContext, millisecondsPerMeasure: msPerMeasure };
@@ -113,10 +134,21 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
       }
       state.current.synth = synth;
       state.current.timer = timer;
+      // length of the piece in ms, for the progress bar (abcjs gives seconds at the written tempo)
+      const secs = Number(audioVisual.getTotalTime?.() ?? 0);
+      state.current.total = secs > 0 ? (secs * 1000) / factor : undefined;
       activeStop = () => { synth.stop(); timer.stop(); clear(); onEnded?.(); };
       synth.start();
       timer.start();
       if (loop && loopStart > 0) jumpBack();
+    },
+    seek(fraction: number) {
+      const { synth, timer } = state.current;
+      if (!synth || !timer) return;
+      const f = Math.min(0.999, Math.max(0, fraction));
+      synth.seek(f);
+      timer.setProgress(f);
+      onProgress?.(f);
     },
     pause() {
       state.current.synth?.pause();

@@ -1,15 +1,36 @@
 import { Footer } from "./Legal";
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { Logo } from "./Logo";
 import { useLang } from "@/lib/i18n";
 import { FREE_PER_MONTH, useFreeLeft } from "./usage";
 
 const nav = [
-  { to: "/", label: "nav.studio" },
+  { to: "/studio", label: "nav.studio" },
   { to: "/scores", label: "nav.scores" },
   { to: "/templates", label: "nav.templates" },
   { to: "/pricing", label: "nav.pricing" },
 ] as const;
+
+/** Light / dark switch; the choice is remembered in this browser. */
+function ThemeToggle() {
+  const { t } = useLang();
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(document.documentElement.classList.contains("dark")); }, []);
+  const flip = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try { localStorage.setItem("drini.theme", next ? "dark" : "light"); } catch { /* private mode */ }
+  };
+  return (
+    <button type="button" onClick={flip} aria-label={dark ? t("theme.light") : t("theme.dark")} title={dark ? t("theme.light") : t("theme.dark")}
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-paper text-graphite transition-colors hover:text-ink">
+      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
+  );
+}
 
 export function TopBar() {
   const { t, lang, setLang } = useLang();
@@ -50,7 +71,8 @@ export function TopBar() {
               </button>
             ))}
           </div>
-          <Link to="/pricing" className="btn btn-outline">{t("upgrade")}</Link>
+          <ThemeToggle />
+          <Link to="/pricing" className="btn btn-outline hidden sm:inline-flex">{t("upgrade")}</Link>
         </div>
       </div>
     </header>

@@ -44,7 +44,7 @@ function Record() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-6 pt-4">
-      <Link to="/" aria-label={t("rp.back")} className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-paper text-ink"><ArrowLeft className="h-5 w-5" /></Link>
+      <Link to="/studio" aria-label={t("rp.back")} className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-paper text-ink"><ArrowLeft className="h-5 w-5" /></Link>
       <h1 className="mt-6 text-4xl text-ink">{t("rp.title")}</h1>
       <p className="mt-2 text-graphite">{t("rp.sub")}</p>
 
@@ -89,7 +89,7 @@ function Record() {
 
       <div className="flex-1" />
       {rec.melody && !busy ? (
-        <Link to="/" search={{ tab: "audio", arrange: true }} onClick={() => storeEnsemble(ensemble)} className="btn btn-primary mt-8 h-14 w-full text-base"><Spark />{t("form.arrange")}</Link>
+        <Link to="/studio" search={{ tab: "audio", arrange: true }} onClick={() => storeEnsemble(ensemble)} className="btn btn-primary mt-8 h-14 w-full text-base"><Spark />{t("form.arrange")}</Link>
       ) : (
         <button disabled className="btn btn-primary mt-8 h-14 w-full text-base opacity-50"><Spark />{t("rp.first")}</button>
       )}

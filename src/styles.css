@@ -82,6 +82,30 @@
   --highlight: oklch(0.4 0.13 5 / 0.08);
 }
 
+/* Dark mode: same brand, night colours. The score itself stays on light paper so notes stay readable. */
+.dark {
+  --primary: oklch(0.6 0.15 8);
+  --primary-hover: oklch(0.66 0.15 8);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --ink: oklch(0.94 0.015 85);
+  --ink-soft: oklch(0.82 0.02 85);
+  --cream: oklch(0.17 0.025 290);
+  --paper: oklch(0.22 0.03 290);
+  --beige: oklch(0.29 0.03 290);
+  --graphite: oklch(0.74 0.02 295);
+  --border: oklch(0.33 0.03 290);
+  --input: oklch(0.4 0.03 290);
+  --success-soft: oklch(0.3 0.05 150);
+  --success: oklch(0.8 0.1 150);
+  --warning-soft: oklch(0.32 0.05 80);
+  --warning: oklch(0.85 0.1 80);
+  --highlight: oklch(0.6 0.15 8 / 0.15);
+  color-scheme: dark;
+}
+.dark .score-scroll { background: #FFFDF8; border-color: #3a3550; }
+.dark .score-scroll .text-graphite { color: #5C5868; }
+.dark #chat { --ink: oklch(0.13 0.025 290); --ink-soft: oklch(0.24 0.03 290); --cream: oklch(0.94 0.015 85); }
+
 @layer base {
   * { border-color: var(--color-border); }
   body {
@@ -90,7 +114,10 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.015em; font-optical-sizing: auto; }
+  h1 em, h2 em { font-style: italic; }
+  /* phones zoom into inputs smaller than 16px; keep them at 16px there */
+  @media (max-width: 767px) { input, select, textarea { font-size: 16px !important; } }
 }
 
 @utility card-paper {
@@ -138,6 +165,9 @@
 @utility wave-bar { animation: wave 1.1s ease-in-out infinite; transform-origin: center; }
 @keyframes ring { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(1.25); opacity: 0; } }
 @utility ring-pulse { animation: ring 1.8s ease-out infinite; }
+
+@keyframes note-in { 0%, 8% { opacity: 0; transform: translateY(6px); } 18%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.drini-note { opacity: 0; animation: note-in 5.2s ease-out infinite; transform-box: fill-box; }
 
 /* abcjs */
 .score-sheet svg { max-width: 100%; height: auto; }

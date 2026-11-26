@@ -18,6 +18,8 @@ type Arrangement = Extract<DriniResult, { ok: true }>["arrangement"];
 /** A chat message; `key` marks built-in messages that are shown in the current language. */
 export type Msg = { from: "user" | "drini"; text: string; key?: "chat.welcome" };
 export type Score = Pick<Arrangement, "title" | "key" | "meter" | "bars" | "abc" | "notes"> & { example?: boolean };
+/** One version of the arrangement on screen, so the user can go back to an earlier draft. */
+export type Draft = { n: number; score: Score; checks: Check[]; label: string };
 
 const initialScore: Score = {
   title: "Folk melody — Piano 4 hands",
@@ -48,6 +50,16 @@ export function useDrini() {
   const [checks, setChecks] = useState<Check[]>([]);
   const [msgs, setMsgs] = useState<Msg[]>([{ from: "drini", text: "", key: "chat.welcome" }]);
   const [draft, setDraft] = useState(1);
+  const [drafts, setDrafts] = useState<Draft[]>([{ n: 1, score: initialScore, checks: [], label: "" }]);
+  /** Record the score now on screen as a draft; a new arrangement starts the list again. */
+  const remember = (next: Score, nextChecks: Check[], label: string, fresh: boolean) => {
+    setDrafts((list) => {
+      const base = fresh ? [] : list;
+      const n = (base[base.length - 1]?.n ?? 0) + 1;
+      setDraft(n);
+      return [...base, { n, score: next, checks: nextChecks, label }].slice(-12);
+    });
+  };
   const [arranging, setArranging] = useState(false);
   const [revising, setRevising] = useState(false);
   // which saved score is on screen, so revisions update it instead of adding a new one
@@ -70,17 +82,17 @@ export function useDrini() {
     }));
 
   /** Show a score and save it (used by AI results and demo mode). */
-  const show = (next: Score, meta: Meta, result: Awaited<ReturnType<typeof checkAbc>>) => {
+  const show = (next: Score, meta: Meta, result: Awaited<ReturnType<typeof checkAbc>>, label = "", fresh = true) => {
     setScore(next);
     setChecks(result.checks);
     current.current = { ...meta };
     setCurrentId(meta.id);
     saveScore({ ...next, ...meta, createdAt: Date.now() });
-    setDraft((d) => d + 1);
+    remember(next, result.checks, label, fresh);
   };
 
   /** Validate an AI result, ask Drini to fix it once if a hard check fails, then show it. */
-  const apply = useCallback(async (res: DriniResult, meta: Meta, isNew: boolean) => {
+  const apply = useCallback(async (res: DriniResult, meta: Meta, isNew: boolean, label = "") => {
     if (!res.ok) { say(res.error + (/credit/i.test(res.error) ? tr("msg.credits") : "")); return; }
     let a = { ...res.arrangement, abc: beamAbc(res.arrangement.abc) };
     let result = await checkAbc(a.abc);
@@ -101,7 +113,7 @@ export function useDrini() {
       }
     }
     if (result.checks[0]?.label === "Score didn't parse") { say(tr("msg.unreadable")); return; }
-    show({ title: a.title, key: abcKeyName(a.abc) ?? a.key, meter: a.meter, bars: a.bars, abc: a.abc, notes: a.notes }, meta, result);
+    show({ title: a.title, key: abcKeyName(a.abc) ?? a.key, meter: a.meter, bars: a.bars, abc: a.abc, notes: a.notes }, meta, result, label, isNew);
     if (isNew) countArrangement();
     say(a.summary);
   }, []);
@@ -197,7 +209,7 @@ export function useDrini() {
       setRevising(true);
       try {
         const res = await reviseFn({ data: { abc: score.abc.slice(0, 20000), message: v.slice(0, 4000), history: prior, lang: getLang() } });
-        await apply(res, current.current ?? { id: newId(), ensemble: "Piano 4 hands", level: "Easy" }, false);
+        await apply(res, current.current ?? { id: newId(), ensemble: "Piano 4 hands", level: "Easy" }, false, v.slice(0, 60));
       } catch {
         say(tr("msg.fail"));
       } finally {
@@ -212,9 +224,11 @@ export function useDrini() {
     current.current = { id: saved.id, ensemble: saved.ensemble, level: saved.level };
     setCurrentId(saved.id);
     const abc = beamAbc(saved.abc);
-    setScore({ title: saved.title, key: saved.key, meter: saved.meter, bars: saved.bars, abc, notes: saved.notes });
-    setDraft(1);
-    setChecks((await checkAbc(abc).catch(() => null))?.checks ?? []);
+    const opened: Score = { title: saved.title, key: saved.key, meter: saved.meter, bars: saved.bars, abc, notes: saved.notes };
+    setScore(opened);
+    const c = (await checkAbc(abc).catch(() => null))?.checks ?? [];
+    setChecks(c);
+    remember(opened, c, "", true);
     say(tr("msg.opened", { title: saved.title }));
   }, []);
 
@@ -228,7 +242,7 @@ export function useDrini() {
         const next: Score = { ...score, abc, key: abcKeyName(abc) ?? score.key, notes: score.notes };
         setScore(next);
         setChecks(result.checks);
-        setDraft((d) => d + 1);
+        remember(next, result.checks, label, false);
         if (current.current) saveScore({ ...next, ...current.current, createdAt: Date.now() });
         say(tr("msg.transposed", { step: label.toLowerCase(), key: next.key }) + (result.problems.length ? tr("msg.transposedRange") : ""));
       } catch {
@@ -238,7 +252,33 @@ export function useDrini() {
     [score],
   );
 
-  return { score, checks, msgs, draft, arranging, revising, busy: arranging || revising, currentId, arrange, revise, open, transpose };
+  /** Go back to an earlier draft: it becomes the score on screen (and is saved again). */
+  const restore = useCallback((n: number) => {
+    const d = drafts.find((x) => x.n === n);
+    if (!d) return;
+    setScore(d.score);
+    setChecks(d.checks);
+    setDraft(n);
+    if (current.current) saveScore({ ...d.score, ...current.current, createdAt: Date.now() });
+    say(tr("msg.restored", { n }));
+  }, [drafts]);
+
+  /** Show a ready-made example (not saved, not counted), e.g. from the empty Recent list. */
+  const preview = useCallback(async (abc: string) => {
+    const fixed = beamAbc(abc);
+    const result = await checkAbc(fixed);
+    const title = /^T:(.*)$/m.exec(fixed)?.[1]?.trim() || "Example";
+    const meter = /^M:(.*)$/m.exec(fixed)?.[1]?.trim() ?? "4/4";
+    const bars = (fixed.match(/^\[V:[^\]]+\][^\n]*/m)?.[0].match(/\|/g)?.length ?? 8);
+    current.current = null;
+    setCurrentId(null);
+    const next: Score = { title, key: abcKeyName(fixed) ?? "", meter, bars, abc: fixed, notes: [], example: true };
+    setScore(next);
+    setChecks(result.checks);
+    remember(next, result.checks, "", true);
+  }, []);
+
+  return { score, checks, msgs, draft, drafts, arranging, revising, busy: arranging || revising, currentId, arrange, revise, open, transpose, restore, preview };
 }
 
 // ---- demo helpers ----
