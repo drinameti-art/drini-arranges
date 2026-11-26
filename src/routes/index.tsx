@@ -60,7 +60,7 @@ function Landing() {
   const L = (en: string, sq: string) => (lang === "sq" ? sq : en);
 
   const ways = [
-    { icon: PenLine, title: L("Describe it", "Përshkruaje"), text: L("“Waltz for string quartet in D minor” — Drini writes it.", "“Vals për kuartet harqesh në re mol” — Drini e shkruan.") },
+    { icon: PenLine, title: L("Describe it", "Përshkruaje"), text: L("“Waltz for string quartet in D minor” — Drini writes it.", "“Vals për kuartet harqesh në D mol” — Drini e shkruan.") },
     { icon: Mic, title: L("Hum it", "Këndoje"), text: L("Sing or play a melody into your phone; Drini turns it into notes.", "Këndo ose luaj një melodi në telefon; Drini e kthen në nota.") },
     { icon: FileMusic, title: L("Upload it", "Ngarkoje"), text: L("A photo, a PDF or a MuseScore file of your music.", "Një foto, PDF ose skedar MuseScore të muzikës sate.") },
   ];
