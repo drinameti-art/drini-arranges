@@ -12,6 +12,7 @@ Output rules:
 - Every voice has the same number of bars, and every bar adds up exactly to the meter.
 - End the piece on the tonic with a final barline |].
 - Write rests with z (or x); never use Z multi-measure rests.
+- Beam eighth notes and shorter by writing the notes of one beat together without spaces (3/4 with L:1/8: "gf g2 fe"), and put a space between beats.
 - Default length 16 bars unless asked or unless you are arranging a given source score (then match its length); never more than 64. Use repeat signs (|: :|) and first/second endings for repeated sections.
 
 Musical rules:

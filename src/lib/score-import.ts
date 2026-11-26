@@ -10,6 +10,8 @@ export type ScoreSource =
   | { kind: "abc"; fileName: string; abc: string; info: string }
   | { kind: "image" | "pdf"; fileName: string; mediaType: string; data: string; previewUrl: string | null; info: string };
 
+import { beamAbc } from "./abc-beam";
+
 const MAX_BARS = 64;
 const MAX_PARTS = 8;
 
@@ -421,5 +423,5 @@ export function toAbc(score: ImportedScore): string {
     }
     bodies.push(`[V:V${pi + 1}] ${bars.join(" | ")} |]`);
   });
-  return [...head, ...bodies].join("\n");
+  return beamAbc([...head, ...bodies].join("\n"));
 }

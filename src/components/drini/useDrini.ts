@@ -3,6 +3,7 @@ import { arrange as arrangeFn, arrangeFromFile as arrangeFileFn, revise as revis
 import { checkAbc, type Check } from "@/lib/abc-check";
 import { keyName as abcKeyName, transposeAbc } from "@/lib/abc-tools";
 import { getLang, tr } from "@/lib/i18n";
+import { beamAbc } from "@/lib/abc-beam";
 import { toAbc, type ImportedNote } from "@/lib/score-import";
 import { sampleScoreAbc } from "./data";
 import type { ArrangeRequest } from "./ArrangeForm";
@@ -81,7 +82,7 @@ export function useDrini() {
   /** Validate an AI result, ask Drini to fix it once if a hard check fails, then show it. */
   const apply = useCallback(async (res: DriniResult, meta: Meta, isNew: boolean) => {
     if (!res.ok) { say(res.error + (/credit/i.test(res.error) ? tr("msg.credits") : "")); return; }
-    let a = res.arrangement;
+    let a = { ...res.arrangement, abc: beamAbc(res.arrangement.abc) };
     let result = await checkAbc(a.abc);
     if (result.problems.length) {
       try {
@@ -89,9 +90,9 @@ export function useDrini() {
           data: { abc: a.abc.slice(0, 20000), message: `Fix these problems: ${result.problems.join(" ")}`, history: [], lang: getLang() },
         });
         if (fix.ok) {
-          const fixed = await checkAbc(fix.arrangement.abc);
+          const fixed = await checkAbc(beamAbc(fix.arrangement.abc));
           if (fixed.problems.length <= result.problems.length) {
-            a = { ...fix.arrangement, summary: a.summary };
+            a = { ...fix.arrangement, abc: beamAbc(fix.arrangement.abc), summary: a.summary };
             result = fixed;
           }
         }
@@ -119,6 +120,7 @@ export function useDrini() {
       abc = d?.abc ?? sampleScoreAbc;
       notes = d?.notes ?? initialScore.notes;
     }
+    abc = beamAbc(abc);
     const result = await checkAbc(abc);
     const title = /^T:(.*)$/m.exec(abc)?.[1]?.trim() || "Demo";
     const bars = (abc.match(/^\[V:[^\]]+\][^\n]*/m)?.[0].match(/\|/g)?.length ?? 8) - 0;
@@ -205,9 +207,10 @@ export function useDrini() {
   const open = useCallback(async (saved: SavedScore) => {
     current.current = { id: saved.id, ensemble: saved.ensemble, level: saved.level };
     setCurrentId(saved.id);
-    setScore({ title: saved.title, key: saved.key, meter: saved.meter, bars: saved.bars, abc: saved.abc, notes: saved.notes });
+    const abc = beamAbc(saved.abc);
+    setScore({ title: saved.title, key: saved.key, meter: saved.meter, bars: saved.bars, abc, notes: saved.notes });
     setDraft(1);
-    setChecks((await checkAbc(saved.abc).catch(() => null))?.checks ?? []);
+    setChecks((await checkAbc(abc).catch(() => null))?.checks ?? []);
     say(tr("msg.opened", { title: saved.title }));
   }, []);
 
@@ -215,7 +218,7 @@ export function useDrini() {
   const transpose = useCallback(
     async (semitones: number, label: string) => {
       try {
-        const abc = await transposeAbc(score.abc, semitones);
+        const abc = beamAbc(await transposeAbc(score.abc, semitones));
         const result = await checkAbc(abc);
         if (result.checks[0]?.label === "Score didn't parse") throw new Error("unreadable");
         const next: Score = { ...score, abc, key: abcKeyName(abc) ?? score.key, notes: score.notes };
