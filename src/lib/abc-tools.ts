@@ -106,8 +106,16 @@ const PROGRAMS: [RegExp, number][] = [
   [/piano|pno|keys|\b(rh|lh)\b|primo|secondo|player/i, 0],
 ];
 
-/** Higher-quality samples than abcjs's default set (Musyng Kite, same format, hosted with the abcjs sound fonts). */
-export const SOUND_FONT_URL = "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/";
+/**
+ * Sound sets for playback, best first. MuseScore_General (MuseScore's own sound font, MIT) is rendered
+ * note by note into public/soundfonts and served with the app; Musyng Kite is the online fallback,
+ * and abcjs's built-in set is the last resort (no soundFontUrl).
+ */
+export const SOUND_FONT_URLS = [
+  "/soundfonts/MuseScoreGeneral/",
+  "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/",
+];
+export const SOUND_FONT_URL = SOUND_FONT_URLS[0]!;
 
 /** Where each part sits left to right, like players on a stage (-1 left … 1 right). */
 const SEATING: [RegExp, number][] = [

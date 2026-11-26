@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
-import { oneLabelPerInstrument, playbackOptions, withInstruments } from "@/lib/abc-tools";
+import { SOUND_FONT_URLS, oneLabelPerInstrument, playbackOptions, withInstruments } from "@/lib/abc-tools";
 
 export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
 
@@ -65,18 +65,23 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
           (ev.elements ?? []).flat().forEach((n: any) => n.classList?.add("abcjs-playing"));
         },
       });
-      const synth = new abcjs.synth.CreateSynth();
       const base = { visualObj: visual, audioContext, millisecondsPerMeasure: visual.millisecondsPerMeasure() };
       const options = playbackOptions(abcNow.current);
-      try {
-        await synth.init({ ...base, options });
-        await synth.prime();
-      } catch {
-        // the better samples could not be loaded (offline, blocked): fall back to abcjs's built-in set
-        const { soundFontUrl: _unused, ...rest } = options;
-        void _unused;
-        await synth.init({ ...base, options: rest });
-        await synth.prime();
+      let synth = new abcjs.synth.CreateSynth();
+      // MuseScore sounds first, then Musyng Kite, then abcjs's built-in set if neither can load
+      const tries: (string | undefined)[] = [...SOUND_FONT_URLS, undefined];
+      for (let i = 0; i < tries.length; i++) {
+        const url = tries[i];
+        const { soundFontUrl: _drop, ...rest } = options;
+        void _drop;
+        try {
+          if (i > 0) synth = new abcjs.synth.CreateSynth();
+          await synth.init({ ...base, options: url ? { ...rest, soundFontUrl: new URL(url, window.location.href).href } : rest });
+          await synth.prime();
+          break;
+        } catch (err) {
+          if (i === tries.length - 1) throw err;
+        }
       }
       state.current.synth = synth;
       state.current.timer = timer;
