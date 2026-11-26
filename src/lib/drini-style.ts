@@ -1,7 +1,11 @@
 // Drini's house style, measured from Drin Ameti's own arrangements (DriniArranges):
 // Carol of the Bells and Habanera (2 violins, viola, piano), Schindler's Theme (same),
 // Himni i Kosovës and Tumankuqja (string orchestra), Yesterday (wind quartet),
-// The Muse and The Lover (flute and piano) and a piano nocturne.
+// The Muse and The Lover (flute and piano) and a piano nocturne; then 14 more:
+// Albanian songs (Albulena, I Dehur Jam), a beginner piece (Bink's Sake for a student),
+// Comptine d'un autre été (piano 4 hands), Eksperienca (flute and piano), two jazz sketches,
+// his own piano pieces (Waves etude, Time miniature, a loop piece in C minor, a waltz-like poem)
+// and a two-flutes-and-piano sketch.
 // Every number below comes from analysing those eight scores note by note
 // (harmony per beat, voice motion on an eighth-note grid, ranges, roles per bar, markings).
 // Short excerpts are only from traditional / public-domain melodies or Drin's own music.
@@ -58,7 +62,7 @@ export const DRINI_STYLE = `HOUSE STYLE: write like Drin Ameti (DriniArranges). 
 - Right hand under a soloist: block chords on the main beats spanning an octave (the melody note doubled an octave lower with chord tones between). Or sixteenth-note broken-chord figuration in the middle register, under a string melody.
 - Never sit on a held note for more than two bars in an accompanying part (pads only briefly, for colour). Keep a figure going and keep it consistent within a section. Change the figure at a new section.
 - When arranging the user's own piece, keep its accompaniment pattern and character and carry it into the new instruments.
-- Easy level keeps these shapes but simplifies them: single bass notes or root–fifth, one-octave span, no octave doubling in the right hand.
+- Easy level keeps these shapes but simplifies them: single bass notes or root–fifth, one-octave span, no octave doubling in the right hand. See section 10 for beginners.
 
 7. DYNAMICS AND ARTICULATION (how his scores are marked)
 - Every part gets a dynamic at its first entry, and every new section gets new dynamics in all playing parts. Open mp or mf. Grow by sections (mp → mf → f → ff) toward the climax.
@@ -74,7 +78,47 @@ export const DRINI_STYLE = `HOUSE STYLE: write like Drin Ameti (DriniArranges). 
 - Clefs: violins, flute, piccolo, horn, piano right hand treble. Viola alto. Cello, bassoon, double bass and piano left hand bass.
 - Clean pages: no multi-measure rests, no editorial text, beamed notes grouped by beat, rests written in every bar of a silent part, the same number of bars in every part.
 
-9. THE STAFF RULE (Drin's explicit instruction): parts must not extend beyond their staff. At most one ledger line above or below (two for piano). In his own scores only violin 1 at a climax goes higher, and Drini does not do that.
+10. STYLE-SPECIFIC WRITING (measured from the second set of 14 scores)
+
+Beginner pieces (Bink's Sake, written for a student, "for Asaf" under the title)
+- 16 bars in four 4-bar phrases, each ending on V (half cadences), the last returning to I.
+- Right hand in one five-finger position around middle C (E4–A4, whole range G3–A4), quarter, half and dotted-quarter-plus-eighth rhythms, mostly steps and small leaps.
+- Left hand: one whole note per bar, the roots of I and V alternating (C3, G2), nothing faster.
+- Harmony I, IV, V only (a V7 or a passing diminished chord at most once).
+
+Albanian songs (këngë shqipe: Albulena, I Dehur Jam)
+- Subtitle "Këngë Shqipe" or the instrument. Chord symbols above the right hand ("Am" "C" "Dm" "F" "G").
+- Harmony from the minor mode in two flavours: natural minor loops (i–III–iv–VI–VII, Albulena: Am C Dm F G F G Am) and harmonic minor with a major V and the raised 7th leading back to i (I Dehur Jam). 2.5–3 chords per bar; triads, few sevenths (13–21%).
+- Right hand: the song melody alone, single notes in the middle (C4–G5), stepwise (46–75% steps), simple rhythm.
+- Left hand: an Alberti-type broken chord in eighths in the tenor register (root–fifth–third–fifth, A3 E4 C4 E4) or a 4/4 "bass and three chords" pattern (bass note on beat 1, chord on beats 2, 3 and 4). Pedal marked through each chord.
+
+Piano 4 hands (Comptine d'un autre été)
+- Name the players "Player 1" and "Player 2", each with two staves; subtitle "Piano Duet - 4 Hands".
+- The two players take turns: one keeps the accompaniment (left-hand octaves with the fifth and third between, in eighths: E2+E3, B2, G3+E3, B2) while the other plays the melody, and they swap every 4–8 bars. Entries staggered by 4 bars (player 1 bars 1–4 alone, player 2 joins in bar 5).
+- Both players stay in the middle of the keyboard (melodies around B4); the right hands double each other at the unison or octave in the full sections (63%). Use repeats with first and second endings, "a tempo" and rit. at section joins, and a fermata at the end of each big section.
+
+Flute and piano, film or modern style (Eksperienca, Einaudi)
+- Piano alone for 8 bars (with fermatas on the opening bars if the intro is free), flute enters in bar 8 or 9.
+- The flute plays long notes (whole and dotted half notes are the most common bar) with tenuto marks and breath marks; the piano carries the motion with sixteenth-note broken chords in the right hand and root–fifth–octave–fifth eighths in the left.
+- Harmony: a short modal loop repeated with growing texture (i–VImaj7–III–v; VImaj7 is the most common chord, 28 times), ending on a major tonic after a sus4 (Isus4–I). Slow the tempo for the last section (70 to 62) and fade to ppp.
+
+Two flutes and piano (sketch)
+- The flutes play in parallel thirds, in the same rhythm (71% thirds, 100% same rhythm); the piano doubles them in the same register.
+
+Jazz and swing (two jazz sketches)
+- ii–V–I harmony with turnarounds: Gm7 C7 Fmaj7 D7, with secondary dominants (A7 D7 G7 C7) before the final cadence. 60% or more of chords are sevenths. Always write chord symbols above.
+- Swing: write swung eighths as a quarter–eighth triplet (or mark "Swing" at the start). The melody uses chromatic approach notes and arpeggios of the chord sevenths.
+- Left hand: bass note on beats 1 and 3, a three-note shell or rootless chord (3rd, 5th, 7th) on beats 2 and 4 in the middle register (G3, then Bb3 D4 F4).
+
+His own piano music (Waves, Time, a 6/4 loop piece, a waltz-like poem)
+- Etude: both hands play sixteenth-note waves of the chord (right hand rising and falling 0-4-7-4-0, left hand the mirror 7-4-0-4-7), overlapping in the middle of the keyboard. Melody notes inside the figuration marked with accents, one slur and one pedal per bar, 3 chords per bar with many sevenths.
+- Miniature (Time): left hand root–fifth–octave in eighths, then the octave repeated in a syncopated rhythm. Right hand close triads in a 3+3+2 rhythm (dotted quarter, dotted quarter, quarter). Authentic V–i cadences at the end of every 4-bar phrase, add9 colours on III and VI, one 8va for the last statement.
+- Fast lyrical piece (6/4, Allegro): right hand melody high (C5–D6), left hand wide chords spanning up to two octaves on dotted-quarter pulses, 4–5 chord changes per bar, two thirds of them sevenths or add9.
+- Waltz-like romantic piece (3/4): left hand bass on beat 1 and chords on beats 2 and 3 throughout, right hand melody often in octaves or chords, a borrowed bVI from the minor.
+
+Headers for solo and chamber pieces: the subtitle names the genre or instrument ("Piano", "Etude", "Miniature", "In C minor", "Këngë Shqipe"). The composer goes on the right (for his own pieces "Drin Ameti"). A dedication goes on the left ("For Asaf").
+
+11. THE STAFF RULE (Drin's explicit instruction): parts must not extend beyond their staff. At most one ledger line above or below (two for piano). In his own scores only violin 1 at a climax goes higher, and Drini does not do that.
 
 Examples of the style, in ABC (4 bars each)
 
@@ -158,4 +202,49 @@ V:V5 clef=bass name="Piano LH"
 [V:V2] "^pizz." !mf! z4 .f4 | z4 .f4 | z4 .e4 | z4 .e4 |
 [V:V3] "^pizz." !mf! z4 .A4 | z4 .A4 | z4 .G4 | z4 .^C4 |
 [V:V4] !mf! z4 .[FA]2.[FA]2 | z4 .[FA]2.[FA]2 | z4 .[EG]2.[EG]2 | z4 .[^CE]2.[^CE]2 |
-[V:V5] !mf! D,,3A,, F,2A,,2 | D,,3A,, F,2A,,2 | D,,3A,, G,2A,,2 | A,,3E, ^C2E,2 |`;
+[V:V5] !mf! D,,3A,, F,2A,,2 | D,,3A,, F,2A,,2 | D,,3A,, G,2A,,2 | A,,3E, ^C2E,2 |
+
+Albanian song style, natural minor loop, chord symbols, Alberti left hand (original melody):
+X:1
+T:Këngë
+T:Këngë Shqipe
+C:arr. DriniArranges
+M:4/4
+L:1/8
+Q:1/4=84
+K:Am
+%%score {V1 V2}
+V:V1 clef=treble name="Piano RH"
+V:V2 clef=bass name="Piano LH"
+[V:V1] !mp! "Am"e2 c2 d2 e2 | "C"g2 e2 c4 | "Dm"f2 e2 d2 c2 | "G"d4 B4 |
+[V:V2] A,ECE A,ECE | C,G,E,G, C,G,E,G, | D,A,F,A, D,A,F,A, | G,,D,B,,D, G,,D,B,,D, |
+
+Jazz, swung eighths as triplets, bass on 1 and 3 with shell chords on 2 and 4 (original melody):
+X:1
+T:Swing
+T:Piano
+C:arr. DriniArranges
+M:4/4
+L:1/8
+Q:"Swing" 1/4=120
+K:F
+%%score {V1 V2}
+V:V1 clef=treble name="Piano RH"
+V:V2 clef=bass name="Piano LH"
+[V:V1] !mf! "Gm7"z2 (3:2:2d2f (3:2:2a2g (3:2:2f2e | "C7"(3:2:2e2d (3:2:2^c2d g4 | "Fmaj7"(3:2:2a2g (3:2:2f2e (3:2:2c2A F2 | "D7"(3:2:2^F2A (3:2:2c2e d4 |
+[V:V2] G,2 [B,DF]2 G,2 [B,DF]2 | C,2 [E,G,B,]2 C,2 [E,G,B,]2 | F,2 [A,CE]2 F,2 [A,CE]2 | D,2 [A,C^F]2 D,2 [A,C^F]2 |
+
+Beginner piano, five-finger right hand, whole-note roots in the left hand (original melody):
+X:1
+T:First Steps
+T:Piano
+C:arr. DriniArranges
+M:4/4
+L:1/4
+Q:1/4=90
+K:C
+%%score {V1 V2}
+V:V1 clef=treble name="Piano RH"
+V:V2 clef=bass name="Piano LH"
+[V:V1] !mp! E3/2 G/ G2 | A3/2 G/ E2 | F E D E | D4 |
+[V:V2] C,4 | F,,4 | C,4 | G,,4 |`;

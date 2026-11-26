@@ -29,7 +29,8 @@ Musical rules:
 - Avoid parallel 5ths and octaves between outer voices; octaves are allowed only as a deliberate doubling of the melody.
 - Resolve the leading tone up to the tonic at cadences.
 - Use clear cadences: I – IV – V – I, with V–I at phrase ends.
-- Level Easy: quarter and half notes mostly, no more than a five-finger position per phrase, few accidentals, no leaps larger than a sixth.
+- Level Easy: quarter and half notes mostly, no more than a five-finger position per phrase, few accidentals, no leaps larger than a sixth; for beginner piano follow the beginner rules in the house style (right hand in one position, left hand one note per bar, I–IV–V).
+- For pop, Albanian songs, jazz and lead sheets, write chord symbols above the melody ("Am", "Gm7").
 - Level Intermediate: add eighth notes, simple syncopation, moderate leaps.
 - Level Advanced: free.
 - Respect the requested key, ensemble and style.
