@@ -1,5 +1,7 @@
 // Small helpers on top of abcjs: transposing a score and exporting MIDI.
 
+import { parseScore, partAbc, playerGroups, writtenPitch } from "./abc-parts";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function abcjs(): Promise<any> {
   const mod = await import("abcjs");
@@ -67,29 +69,72 @@ export function fileSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "drini-score";
 }
 
-/** Print just the score in its own window: one image per system so pages break between systems, no app chrome. */
-export async function printScore(title: string, meta: string, abc: string) {
-  const w = window.open("", "_blank"); // open first, inside the click, so pop-up blockers allow it
+/** Renders ABC off screen into one SVG per system (so printed pages break between systems). */
+async function systemsSvg(abc: string): Promise<string[]> {
   const lib = await abcjs();
   const box = document.createElement("div");
   box.style.cssText = "position:fixed;left:-10000px;top:0;width:800px";
   document.body.appendChild(box);
-  lib.renderAbc(box, oneLabelPerInstrument(abc), { oneSvgPerLine: true, staffwidth: 720, paddingtop: 8, paddingbottom: 8, foregroundColor: "#17162B" });
+  lib.renderAbc(box, abc, { oneSvgPerLine: true, staffwidth: 720, paddingtop: 8, paddingbottom: 8, foregroundColor: "#17162B" });
   const svgs = Array.from(box.querySelectorAll("svg")).map((svg) => {
     svg.removeAttribute("style");
     svg.setAttribute("width", "100%");
     return svg.outerHTML;
   });
   box.remove();
+  return svgs;
+}
+
+const esc = (x: string) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+function printWindow(w: Window | null, title: string, sections: { heading: string; meta: string; svgs: string[] }[]) {
   if (!w) { window.print(); return; }
-  const esc = (x: string) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const body = sections
+    .map((sec, i) => `<section${i ? ' class="part"' : ""}><h1>${esc(sec.heading)}</h1><p>${esc(sec.meta)}</p>${sec.svgs.join("")}</section>`)
+    .join("");
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>@page{margin:14mm 14mm 18mm}body{font-family:Georgia,serif;color:#17162B;margin:0;padding-bottom:10mm}h1{font-size:20px;margin:0 0 2px}p{font:12px Inter,Arial,sans-serif;color:#5C5868;margin:0 0 8px}svg{display:block;max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}
+.part{break-before:page;page-break-before:always}
 .copy{position:fixed;left:0;right:0;bottom:0;text-align:center;font:10px Inter,Arial,sans-serif;letter-spacing:.04em;color:#5C5868}</style>
-</head><body><h1>${esc(title)}</h1><p>${esc(meta)}</p>${svgs.join("")}<div class="copy">${esc(COPYRIGHT)}</div></body></html>`);
+</head><body>${body}<div class="copy">${esc(COPYRIGHT)}</div></body></html>`);
   w.document.close();
   w.focus();
   setTimeout(() => { w.print(); }, 400);
+}
+
+/** Print just the score in its own window: one image per system so pages break between systems, no app chrome. */
+export async function printScore(title: string, meta: string, abc: string) {
+  const w = window.open("", "_blank"); // open first, inside the click, so pop-up blockers allow it
+  const svgs = await systemsSvg(oneLabelPerInstrument(abc));
+  printWindow(w, title, [{ heading: title, meta, svgs }]);
+}
+
+/** The players of a score (piano hands together), for the parts menu. */
+export function scoreParts(abc: string): { name: string; ids: string[]; label: string }[] {
+  return playerGroups(parseScore(abc)).map((g) => ({ ...g, label: writtenPitch(g.name)?.label ?? g.name }));
+}
+
+/**
+ * Prints one part per player (or only the players named), each starting on a new page, with empty bars
+ * compressed into multi-bar rests. Clarinets, trumpets, horns and saxophones are printed at written pitch.
+ */
+export async function printParts(title: string, meta: string, abc: string, only?: string[]) {
+  const w = window.open("", "_blank");
+  const lib = await abcjs();
+  const sections: { heading: string; meta: string; svgs: string[] }[] = [];
+  for (const p of scoreParts(abc)) {
+    if (only && !only.includes(p.name)) continue;
+    let part = partAbc(abc, p.ids, p.label);
+    const wp = writtenPitch(p.name);
+    if (wp) {
+      try {
+        const t: unknown = lib.strTranspose(part, lib.renderAbc("*", part)[0], wp.semitones);
+        if (typeof t === "string" && t.trim()) part = t;
+      } catch { /* keep concert pitch if transposing fails */ }
+    }
+    sections.push({ heading: `${title} — ${p.label}`, meta: wp ? `${meta} · written pitch` : meta, svgs: await systemsSvg(part) });
+  }
+  printWindow(w, `${title} — parts`, sections);
 }
 
 // General MIDI programs per instrument. Sections (plural names: "Violins 1", "Violas") use the string ensemble

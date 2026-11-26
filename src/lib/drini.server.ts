@@ -31,6 +31,7 @@ Musical rules:
 - Use clear cadences: I – IV – V – I, with V–I at phrase ends.
 - Level Easy: quarter and half notes mostly, no more than a five-finger position per phrase, few accidentals, no leaps larger than a sixth; for beginner piano follow the beginner rules in the house style (right hand in one position, left hand one note per bar, I–IV–V).
 - For pop, Albanian songs, jazz and lead sheets, write chord symbols above the melody ("Am", "Gm7").
+- Lyrics: when the user gives words, set them under the voice that sings them (the melody, or every choir voice) with a w: line directly after each music line of that voice. One syllable per note, a hyphen between syllables of one word ("Kë-ngë"), _ to hold a syllable over several notes, * to skip a note. Put the same number of syllables as notes on each line, and keep the words exactly as given (Albanian letters ë and ç included). Without words from the user, do not invent lyrics.
 - Level Intermediate: add eighth notes, simple syncopation, moderate leaps.
 - Level Advanced: free.
 - Respect the requested key, ensemble and style.

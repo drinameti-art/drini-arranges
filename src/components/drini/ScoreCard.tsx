@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { ArrowUpDown, ChevronDown, Download, Pause, Play, Check, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowUpDown, ChevronDown, Download, Pause, Play, Check, AlertTriangle, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import type { Check as CheckItem } from "@/lib/abc-check";
-import { ScoreSheet, type ScoreSheetHandle } from "./ScoreSheet";
-import { COPYRIGHT, downloadAbc, downloadMidi, downloadMusicXml, fileSlug, printScore } from "@/lib/abc-tools";
+import { ScoreSheet, type ScoreSheetHandle, type PlayOptions } from "./ScoreSheet";
+import { COPYRIGHT, downloadAbc, downloadMidi, downloadMusicXml, fileSlug, printParts, printScore, scoreParts } from "@/lib/abc-tools";
 import { checkLabel, keyName, useLang } from "@/lib/i18n";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -39,11 +39,29 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
     setStarted(false);
   }, [score.abc]);
 
+  // Practice settings: tempo, muted players, loop, count-in. Changing them stops playback; Play starts with the new ones.
+  const parts = useMemo(() => scoreParts(score.abc), [score.abc]);
+  const [practice, setPractice] = useState(false);
+  const [tempo, setTempo] = useState(100);
+  const [muted, setMuted] = useState<string[]>([]);
+  const [loopOn, setLoopOn] = useState(false);
+  const [from, setFrom] = useState(1);
+  const [to, setTo] = useState(Math.min(4, score.bars || 4));
+  const [countIn, setCountIn] = useState(false);
+  useEffect(() => { setMuted([]); setLoopOn(false); setFrom(1); setTo(Math.min(4, score.bars || 4)); }, [score.abc, score.bars]);
+  const changed = () => { if (started) { sheet.current?.stop(); setPlaying(false); setStarted(false); } };
+  const playOptions = (): PlayOptions => ({
+    tempo,
+    muted: parts.filter((p) => muted.includes(p.name)).flatMap((p) => p.ids),
+    loop: loopOn ? { from: Math.max(1, Math.min(from, to)), to: Math.max(from, to) } : null,
+    countIn,
+  });
+
   const toggle = async () => {
     if (playing) { sheet.current?.pause(); setPlaying(false); return; }
     setPlaying(true);
     if (started) sheet.current?.resume();
-    else { setStarted(true); await sheet.current?.play(); }
+    else { setStarted(true); await sheet.current?.play(playOptions()); }
   };
 
   const midi = async () => {
@@ -100,12 +118,26 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          <button className="btn btn-ghost" onClick={() => setPractice((v) => !v)} aria-expanded={practice}>
+            <SlidersHorizontal className="h-4 w-4" />{t("pt.practice")}
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="btn btn-ghost"><Download className="h-4 w-4" />{t("score.download")}<ChevronDown className="h-3.5 w-3.5 opacity-60" /></button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onSelect={print}>{t("dl.pdf")}</DropdownMenuItem>
+              {parts.length > 1 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>{t("dl.parts")}</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={() => void printParts(score.title, metaLine, score.abc)}>{t("dl.allParts")}</DropdownMenuItem>
+                  {parts.map((p) => (
+                    <DropdownMenuItem key={p.name} onSelect={() => void printParts(score.title, metaLine, score.abc, [p.name])}>{p.label}</DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem onSelect={() => void musicXml()}>{t("dl.xml")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => void midi()}>{t("dl.midi")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => downloadAbc(score.abc, fileSlug(score.title))}>{t("dl.abc")}</DropdownMenuItem>
@@ -113,6 +145,52 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
           </DropdownMenu>
         </div>
       </div>
+
+      {practice && (
+        <div className="no-print mt-4 grid gap-4 rounded-2xl border border-border bg-cream/60 p-4 text-sm md:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="font-medium text-ink">{t("pt.tempo")}: {tempo}%</span>
+            <input type="range" min={50} max={150} step={5} value={tempo} onChange={(e) => { setTempo(Number(e.target.value)); changed(); }} className="accent-[#7B1F3A]" />
+          </label>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={loopOn} onChange={(e) => { setLoopOn(e.target.checked); changed(); }} />
+              <span className="font-medium text-ink">{t("pt.loop")}</span>
+              <input type="number" min={1} max={score.bars || 999} value={from} onChange={(e) => { setFrom(Number(e.target.value) || 1); changed(); }} className="w-16 rounded-md border border-border bg-paper px-2 py-1" aria-label={t("pt.from")} />
+              <span className="text-graphite">–</span>
+              <input type="number" min={1} max={score.bars || 999} value={to} onChange={(e) => { setTo(Number(e.target.value) || 1); changed(); }} className="w-16 rounded-md border border-border bg-paper px-2 py-1" aria-label={t("pt.to")} />
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={countIn} disabled={loopOn} onChange={(e) => { setCountIn(e.target.checked); changed(); }} />
+              <span className={loopOn ? "text-graphite" : "text-ink"}>{t("pt.countIn")}</span>
+            </label>
+          </div>
+          {parts.length > 1 && (
+            <div className="md:col-span-2">
+              <span className="font-medium text-ink">{t("pt.parts")}</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {parts.map((p) => {
+                  const on = !muted.includes(p.name);
+                  return (
+                    <span key={p.name} className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 ${on ? "border-ink/30 bg-paper" : "border-border bg-beige text-graphite line-through"}`}>
+                      <button type="button" onClick={() => { setMuted((m) => (on ? (m.length + 1 >= parts.length ? m : [...m, p.name]) : m.filter((x) => x !== p.name))); changed(); }} aria-pressed={!on}>
+                        {p.name}
+                      </button>
+                      <button type="button" className="rounded-full bg-ink/5 px-1.5 text-xs no-underline" onClick={() => { setMuted(parts.filter((x) => x.name !== p.name).map((x) => x.name)); changed(); }}>
+                        {t("pt.solo")}
+                      </button>
+                    </span>
+                  );
+                })}
+                {muted.length > 0 && (
+                  <button type="button" className="rounded-full border border-border px-2 py-1 text-graphite" onClick={() => { setMuted([]); changed(); }}>{t("pt.all")}</button>
+                )}
+              </div>
+            </div>
+          )}
+          <p className="text-xs text-graphite md:col-span-2">{t("pt.hint")}</p>
+        </div>
+      )}
 
       <div className="score-scroll mt-5 overflow-x-auto rounded-2xl border border-border bg-paper px-2 py-3">
         <div className="min-w-[680px]">

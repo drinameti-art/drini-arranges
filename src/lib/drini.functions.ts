@@ -11,7 +11,7 @@ function langNote(l?: "en" | "sq") {
 }
 
 const arrangeInput = z.object({
-  description: z.string().max(2000),
+  description: z.string().max(4000),
   ensemble: z.string().max(60),
   level: z.string().max(30),
   key: z.string().max(30),
@@ -24,7 +24,7 @@ const fileInput = z.object({
   data: z.string().min(1).max(12_000_000),
   mediaType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
   fileName: z.string().max(200),
-  description: z.string().max(2000),
+  description: z.string().max(4000),
   ensemble: z.string().max(60),
   level: z.string().max(30),
   key: z.string().max(30),

@@ -1,3 +1,4 @@
+import { Footer } from "./Legal";
 import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import { useLang } from "@/lib/i18n";
@@ -58,9 +59,10 @@ export function TopBar() {
 
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <TopBar />
-      {children}
+      <div className="flex-1">{children}</div>
+      <Footer />
     </div>
   );
 }

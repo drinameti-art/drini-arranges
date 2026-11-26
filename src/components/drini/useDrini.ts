@@ -139,6 +139,10 @@ export function useDrini() {
         return;
       }
       if (freeLeft() <= 0) { say(tr("usage.out", { max: FREE_PER_MONTH })); return; }
+      const words = (r.lyrics ?? "").trim();
+      const lyricsNote = words
+        ? `\n\nLyrics to set under the melody (one syllable per note, hyphens between syllables of a word, in w: lines under the voice that sings them):\n${words.slice(0, 2000)}`
+        : "";
       const text = r.prompt.trim();
       let description = text;
       if (r.mode === "audio") {
@@ -153,7 +157,7 @@ export function useDrini() {
         if (!src) { say(tr("msg.needUpload")); return; }
         setArranging(true);
         try {
-          const base = { ensemble: r.ensemble, level: r.level, key: r.key, style: r.style, description: text.slice(0, 2000), lang };
+          const base = { ensemble: r.ensemble, level: r.level, key: r.key, style: r.style, description: (text + lyricsNote).slice(0, 4000), lang };
           const res = src.kind === "abc"
             ? await arrangeFn({ data: { ...base, source: src.abc.slice(0, 30000) } })
             : await arrangeFileFn({ data: { ...base, data: src.data, mediaType: src.mediaType as "image/jpeg" | "application/pdf", fileName: src.fileName.slice(0, 200) } });
@@ -171,7 +175,7 @@ export function useDrini() {
       setArranging(true);
       try {
         const res = await arrangeFn({
-          data: { description: description.slice(0, 2000), ensemble: r.ensemble, level: r.level, key: r.key, style: r.style, lang },
+          data: { description: (description + lyricsNote).slice(0, 4000), ensemble: r.ensemble, level: r.level, key: r.key, style: r.style, lang },
         });
         await apply(res, { id: newId(), ensemble: r.ensemble, level: r.level }, true);
       } catch {

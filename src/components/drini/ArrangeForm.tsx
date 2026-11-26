@@ -18,6 +18,8 @@ export type ArrangeRequest = {
   style: string;
   melody: StoredMelody | null;
   upload: ScoreSource | null;
+  /** Optional words to set under the melody (choir, songs). */
+  lyrics?: string;
 };
 
 const selects = [
@@ -41,7 +43,9 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text", preset =
     style: "Lyrical",
     melody: null,
     upload: null,
+    lyrics: "",
   });
+  const [showLyrics, setShowLyrics] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const onFile = async (f: File | undefined) => {
@@ -219,6 +223,25 @@ export function ArrangeForm({ loading, onArrange, initialMode = "text", preset =
               </div>
             </div>
           </div>
+        )}
+      </div>
+
+      <div className="mt-4">
+        {showLyrics || req.lyrics ? (
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-ink">{t("form.lyrics")}</span>
+            <textarea
+              className="field min-h-24 resize-y leading-relaxed"
+              placeholder={t("form.lyricsHint")}
+              value={req.lyrics ?? ""}
+              maxLength={2000}
+              onChange={(e) => setReq({ ...req, lyrics: e.target.value })}
+            />
+          </label>
+        ) : (
+          <button type="button" className="text-sm font-medium text-primary underline-offset-4 hover:underline" onClick={() => setShowLyrics(true)}>
+            + {t("form.addLyrics")}
+          </button>
         )}
       </div>
 

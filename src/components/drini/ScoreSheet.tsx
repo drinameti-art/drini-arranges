@@ -1,7 +1,10 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
 import { SOUND_FONT_URLS, oneLabelPerInstrument, playbackOptions, withInstruments } from "@/lib/abc-tools";
+import { pedalPiano, withCountIn, withoutVoices } from "@/lib/abc-parts";
 
-export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
+/** Practice settings for playback: tempo in percent, voices to mute, bars to loop, a count-in bar. */
+export type PlayOptions = { tempo?: number; muted?: string[]; loop?: { from: number; to: number } | null; countIn?: boolean };
+export type ScoreSheetHandle = { play: (opts?: PlayOptions) => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
 
 // Only one score plays at a time: starting one silences any older player (a previous draft, the upload preview…).
 let activeStop: (() => void) | null = null;
@@ -45,7 +48,7 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
   }, [abc, highlightKey]);
 
   useImperativeHandle(ref, () => ({
-    async play() {
+    async play(opts: PlayOptions = {}) {
       activeStop?.();
       await ready.current; // the score on screen must be rendered before it is played
       const { abcjs, visual, abc: drawn } = state.current;
@@ -55,28 +58,53 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
       const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const audioContext = new AC();
       await audioContext.resume();
+
+      // what is heard: the score with muted parts taken out and, from the start, a bar of clicks
+      const loop = opts.loop && opts.loop.to >= opts.loop.from ? opts.loop : null;
+      const countIn = Boolean(opts.countIn) && !loop;
+      const factor = Math.min(2, Math.max(0.25, (opts.tempo ?? 100) / 100));
+      let audioAbc = withoutVoices(withInstruments(abcNow.current), opts.muted ?? []);
+      if (countIn) audioAbc = withCountIn(audioAbc);
+      const audioVisual = audioAbc === withInstruments(abcNow.current) ? visual : abcjs.renderAbc("*", audioAbc)[0];
+      const msPerMeasure = audioVisual.millisecondsPerMeasure() / factor;
+      const loopStart = loop ? ((loop.from - 1) * msPerMeasure) / 1000 : 0;
+      const loopEnd = loop ? (loop.to * msPerMeasure) / 1000 : Infinity;
+
       const clear = () => el.current?.querySelectorAll(".abcjs-playing").forEach((n) => n.classList.remove("abcjs-playing"));
+      let synth = new abcjs.synth.CreateSynth();
+      const jumpBack = () => {
+        synth.seek(loopStart, "seconds");
+        timer.setProgress(loopStart, "seconds");
+      };
       const timer = new abcjs.TimingCallbacks(visual, {
+        qpm: visual.getBpm() * factor,
+        extraMeasuresAtBeginning: countIn ? 1 : 0,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         eventCallback: (ev: any) => {
           clear();
-          if (!ev) { onEnded?.(); return; }
+          if (!ev) {
+            if (loop) { jumpBack(); synth.start(); timer.start(); return; }
+            onEnded?.();
+            return;
+          }
+          if (loop && ev.milliseconds / 1000 >= loopEnd - 0.005) { jumpBack(); return; }
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (ev.elements ?? []).flat().forEach((n: any) => n.classList?.add("abcjs-playing"));
         },
       });
-      const base = { visualObj: visual, audioContext, millisecondsPerMeasure: visual.millisecondsPerMeasure() };
-      const options = playbackOptions(abcNow.current);
-      let synth = new abcjs.synth.CreateSynth();
+      const base = { visualObj: audioVisual, audioContext, millisecondsPerMeasure: msPerMeasure };
+      const { soundFontUrl: _drop, ...options } = playbackOptions(audioAbc);
+      void _drop;
       // MuseScore sounds first, then Musyng Kite, then abcjs's built-in set if neither can load
       const tries: (string | undefined)[] = [...SOUND_FONT_URLS, undefined];
       for (let i = 0; i < tries.length; i++) {
         const url = tries[i];
-        const { soundFontUrl: _drop, ...rest } = options;
-        void _drop;
         try {
           if (i > 0) synth = new abcjs.synth.CreateSynth();
-          await synth.init({ ...base, options: url ? { ...rest, soundFontUrl: new URL(url, window.location.href).href } : rest });
+          await synth.init({
+            ...base,
+            options: { ...options, sequenceCallback: pedalPiano, ...(url ? { soundFontUrl: new URL(url, window.location.href).href } : {}) },
+          });
           await synth.prime();
           break;
         } catch (err) {
@@ -88,6 +116,7 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
       activeStop = () => { synth.stop(); timer.stop(); clear(); onEnded?.(); };
       synth.start();
       timer.start();
+      if (loop && loopStart > 0) jumpBack();
     },
     pause() {
       state.current.synth?.pause();
