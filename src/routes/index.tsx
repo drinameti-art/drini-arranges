@@ -48,7 +48,7 @@ function ExamplePlayer({ abc, label, dark = false }: { abc: string; label: strin
       <div className="h-1 bg-beige"><div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${progress * 100}%` }} /></div>
       <div className="score-scroll max-h-[360px] overflow-auto px-2 py-3">
         <div className="min-w-[560px]">
-          <ScoreSheet ref={sheet} abc={abc} onProgress={setProgress} follow={false} onEnded={() => { setPlaying(false); setProgress(0); }} />
+          <ScoreSheet ref={sheet} abc={abc.replace(/^T:.*\n/gm, "")} onProgress={setProgress} follow={false} onEnded={() => { setPlaying(false); setProgress(0); }} />
         </div>
       </div>
     </div>
