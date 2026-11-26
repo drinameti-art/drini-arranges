@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { analyseMelody, toMono, type Melody } from "@/lib/melody";
+import { tr } from "@/lib/i18n";
 
 export type RecorderStatus = "idle" | "recording" | "analysing" | "done" | "error";
 
@@ -68,7 +69,7 @@ export function useMelodyRecorder() {
       const m = analyseMelody(toMono(channels), audio.sampleRate);
       if (m.notes.length < 2) {
         setMelody(null);
-        setError("I couldn't hear a clear melody. Try humming a little louder, one note at a time, somewhere quiet.");
+        setError(tr("rec.err.quiet"));
         setStatus("error");
         return;
       }
@@ -77,7 +78,7 @@ export function useMelodyRecorder() {
       setStatus("done");
     } catch {
       setMelody(null);
-      setError("I couldn't read that audio. Try another recording or an MP3, WAV or M4A file.");
+      setError(tr("rec.err.read"));
       setStatus("error");
     }
   }, []);
@@ -91,7 +92,7 @@ export function useMelodyRecorder() {
     setError(null);
     setFileName(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setError("This browser can't record audio. Upload a recording instead.");
+      setError(tr("rec.err.browser"));
       setStatus("error");
       return;
     }
@@ -118,7 +119,7 @@ export function useMelodyRecorder() {
       }, 250);
     } catch {
       cleanup();
-      setError("I need permission to use the microphone. Allow it in your browser, or upload a recording instead.");
+      setError(tr("rec.err.mic"));
       setStatus("error");
     }
   }, [analyse, stop]);

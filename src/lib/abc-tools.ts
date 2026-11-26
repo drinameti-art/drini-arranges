@@ -35,6 +35,14 @@ export async function downloadMidi(abc: string, fileBase: string) {
   download(new Blob([data as BlobPart], { type: "audio/midi" }), `${fileBase}.mid`);
 }
 
+/** Downloads the score as MusicXML for MuseScore, Sibelius, Finale or Dorico. */
+export async function downloadMusicXml(abc: string, title: string, fileBase: string) {
+  const lib = await abcjs();
+  const { abcToMusicXml } = await import("./musicxml");
+  const xml = abcToMusicXml(lib, abc, title);
+  download(new Blob([xml], { type: "application/vnd.recordare.musicxml+xml" }), `${fileBase}.musicxml`);
+}
+
 export function downloadAbc(abc: string, fileBase: string) {
   download(new Blob([abc], { type: "text/vnd.abc;charset=utf-8" }), `${fileBase}.abc`);
 }

@@ -1,0 +1,432 @@
+// English / Albanian interface text. Albanian uses Drin's music terminology:
+// dur/mol, diez/bemol, German note names (H = B natural, B = B flat), takt, trokitje, koronë.
+import { useEffect, useState } from "react";
+
+export type Lang = "en" | "sq";
+const KEY = "drini:lang";
+const EVENT = "drini:lang";
+
+const en = {
+  "nav.studio": "Studio",
+  "nav.scores": "My scores",
+  "nav.templates": "Templates",
+  "nav.pricing": "Pricing",
+  "usage.left": "{n} of {max} free arrangements left this month",
+  "usage.short": "{n}/{max} free left",
+  "usage.out": "You've used this month's {max} free arrangements. Upgrade, or try demo mode in the meantime.",
+  "upgrade": "Upgrade",
+  "form.title": "What should Drini arrange?",
+  "tab.text": "Describe in text",
+  "tab.audio": "Hum or record",
+  "tab.upload": "Upload sheet music",
+  "form.describe": "Describe the piece, the instruments and the feel",
+  "form.try": "Try:",
+  "try.1": "Happy Birthday for string quartet",
+  "try.2": "Easy piano solo, lullaby in F major",
+  "try.3": "SATB hymn, 16 bars, D major",
+  "up.reading": "Reading your score…",
+  "up.hint": "Drop a score here, choose a file or take a photo. MuseScore (.mscz), MusicXML, MIDI, PDF, ABC or a clear photo of the page.",
+  "up.choose": "Choose a file",
+  "up.photo": "Take a photo",
+  "up.remove": "Remove",
+  "up.read": "What Drini read from your file (first bars):",
+  "up.photoAlt": "Your sheet music",
+  "up.extra": "Anything Drini should know? (optional)",
+  "up.extraPh": "For example: make it easier, keep the original key, give the melody to the viola",
+  "rec.listening": "Listening… {time}",
+  "rec.listeningTail": " — hum one line, then press Stop (up to 0:30).",
+  "rec.finding": "Finding the notes…",
+  "rec.yourMelody": "Your melody",
+  "rec.notes": "{n} notes",
+  "rec.likely": "likely {key}, about {bpm} BPM.",
+  "rec.hint": "Press record and hum one line, or upload a recording. A single melody works best.",
+  "rec.record": "Record",
+  "rec.stop": "Stop",
+  "rec.upload": "Upload a recording",
+  "rec.phone": "Hum on your phone",
+  "sel.ensemble": "Ensemble",
+  "sel.level": "Level",
+  "sel.key": "Key",
+  "sel.style": "Style",
+  "form.output": "Output: score · PDF · MIDI · MusicXML · ABC",
+  "form.arrange": "Arrange with Drini",
+  "form.arranging": "Drini is arranging…",
+  "form.template": "Template: {name}. Change anything you like, then press Arrange.",
+  "form.templateAudio": " Record or upload your melody first.",
+  "demo.label": "Demo mode",
+  "demo.desc": "Try the app with example arrangements. Uses no AI credits.",
+  "score.example": "Example",
+  "score.by": "Arranged by Drini",
+  "score.bars": "{n} bars",
+  "score.draft": "Draft {n}",
+  "score.play": "Play",
+  "score.pause": "Pause",
+  "score.transpose": "Transpose",
+  "score.now": "Now in {key}",
+  "score.download": "Download",
+  "dl.midi": "MIDI (.mid): opens in MuseScore, Sibelius",
+  "dl.xml": "MusicXML (.musicxml): edit in MuseScore, Sibelius, Finale",
+  "dl.abc": "ABC notation (.abc)",
+  "dl.pdf": "PDF (print the score)",
+  "dl.midiDone": "MIDI downloaded.",
+  "dl.xmlDone": "MusicXML downloaded. Open it in MuseScore, Sibelius or Finale.",
+  "dl.failed": "Couldn't make that file for this score.",
+  "score.note": "Bar {n} · Drini's note",
+  "score.notePill": "Bar {n}: {text}",
+  "step.up1": "Up a semitone",
+  "step.down1": "Down a semitone",
+  "step.up2": "Up a tone",
+  "step.down2": "Down a tone",
+  "step.up12": "Up an octave",
+  "step.down12": "Down an octave",
+  "chat.sub": "Your arranging assistant",
+  "chat.ph": "Ask Drini to change something…",
+  "chat.label": "Message Drini",
+  "chat.send": "Send",
+  "chat.q1": "Make it easier",
+  "chat.q2": "Add fingering",
+  "chat.q3": "Give the melody to another part",
+  "chat.welcome": "Hi, I'm Drini. Describe a piece, hum a melody or upload sheet music, choose the ensemble, and I'll write the arrangement. Then ask me for changes here.",
+  "recent.new": "New arrangement",
+  "recent.title": "Recent",
+  "recent.empty": "Arrangements Drini writes for you will appear here, saved in this browser.",
+  "msg.fail": "I couldn't finish that one. Try again?",
+  "msg.unreadable": "I wrote something I couldn't read back as a score, so I kept the previous version. Try again?",
+  "msg.needMelody": "Record or upload a melody first, then press Arrange and I'll get to work.",
+  "msg.needUpload": "Upload a score or a photo of the music first, then press Arrange.",
+  "msg.needText": "Tell me what to arrange first: describe the piece, the instruments and the feel.",
+  "msg.uploadFail": "I couldn't arrange from that file. A clearer photo, or a MuseScore/MusicXML file, works best.",
+  "msg.opened": "Here's \"{title}\" again. Tell me what you'd like to change.",
+  "msg.transposed": "Transposed {step}: now in {key}.",
+  "msg.transposedRange": " Some notes now sit outside a comfortable range, see the pills under the score.",
+  "msg.transposeFail": "I couldn't transpose that score. Try another step, or ask me in the chat.",
+  "msg.credits": " Meanwhile, you can switch on demo mode under the Arrange button to try the app without AI credits.",
+  "demo.arranged": "Demo mode: here's a ready-made example for {ensemble} (Ode to Joy). Switch demo mode off and I'll write a new arrangement of your own request.",
+  "demo.source": "Demo mode: this is your file as I read it. Switch demo mode off and I'll arrange it for {ensemble}.",
+  "demo.melody": "Demo mode: here's your melody as I heard it. Switch demo mode off and I'll arrange it for {ensemble}.",
+  "demo.photo": "Demo mode can't read photos or PDFs: that needs AI credits. Here's an example instead.",
+  "demo.revise": "In demo mode I can't rewrite the music: that needs AI credits. You can still play, transpose and download it.",
+  "rp.title": "Hum your melody",
+  "rp.sub": "Sing, hum or play one line. Drini turns it into notes.",
+  "rp.listening": "Listening… hum one line, then tap stop",
+  "rp.finding": "Finding the notes…",
+  "rp.done": "Got it · tap to record again",
+  "rp.idle": "Tap the button and start humming",
+  "rp.upload": "Or upload a recording",
+  "rp.heard": "Notes heard",
+  "rp.likely": "Likely key: {key} · about {bpm} BPM",
+  "rp.for": "Arrange for",
+  "rp.first": "Record a melody first",
+  "rp.back": "Back",
+  "t.piano": "Piano",
+  "t.duet": "Piano duet",
+  "t.choir": "Choir",
+  "t.strings": "Strings",
+  "t.guitar": "Guitar",
+  "sc.title": "My scores",
+  "sc.sub": "Every arrangement Drini has written for you, saved in this browser.",
+  "sc.empty": "No scores yet. Describe a piece or hum a melody, and Drini's arrangements will be kept here.",
+  "sc.go": "Go to the Studio",
+  "tp.title": "Templates",
+  "tp.sub": "Start from a proven brief, then tell Drini what to change.",
+  "tp.use": "Use template",
+  "pr.title": "Simple pricing",
+  "pr.sub": "Start free. Upgrade when Drini becomes part of your teaching or your business.",
+  "pr.month": "/ month",
+  "pr.soon": "Coming soon",
+  "pr.current": "Current plan",
+  "pr.note": "Payments aren't switched on yet. Prices are in euros.",
+  "nav.mArrange": "Arrange",
+  "nav.mScore": "Score",
+  "nav.mChat": "Chat",
+  "rec.err.quiet": "I couldn't hear a clear melody. Try humming a little louder, one note at a time, somewhere quiet.",
+  "rec.err.read": "I couldn't read that audio. Try another recording or an MP3, WAV or M4A file.",
+  "rec.err.browser": "This browser can't record audio. Upload a recording instead.",
+  "rec.err.mic": "I need permission to use the microphone. Allow it in your browser, or upload a recording instead.",
+  "pr.free": "Free",
+  "pr.freeBlurb": "For trying Drini out.",
+  "pr.pro": "Pro",
+  "pr.proBlurb": "For teachers and players.",
+  "pr.studio": "Studio",
+  "pr.studioBlurb": "For schools, choirs and arrangers.",
+  "pr.f.free1": "5 arrangements a month",
+  "pr.f.free2": "Describe, hum or upload a score file",
+  "pr.f.free3": "PDF, MusicXML, MIDI and ABC downloads",
+  "pr.f.free4": "Demo mode to explore",
+  "pr.f.pro1": "100 arrangements a month",
+  "pr.f.pro2": "Read photos and PDFs of sheet music",
+  "pr.f.pro3": "Every ensemble and level",
+  "pr.f.pro4": "Scores saved to your account (coming soon)",
+  "pr.f.st1": "300 arrangements a month",
+  "pr.f.st2": "Everything in Pro",
+  "pr.f.st3": "Use the arrangements commercially",
+  "pr.f.st4": "Up to 3 teachers (coming soon)",
+};
+
+type Key = keyof typeof en;
+
+const sq: Record<Key, string> = {
+  "nav.studio": "Studio",
+  "nav.scores": "Partiturat e mia",
+  "nav.templates": "Shabllonet",
+  "nav.pricing": "Çmimet",
+  "usage.left": "Edhe {n} nga {max} aranzhime falas këtë muaj",
+  "usage.short": "{n}/{max} falas",
+  "usage.out": "I ke përdorur {max} aranzhimet falas të këtij muaji. Përmirëso planin, ose provo modalitetin demo deri atëherë.",
+  "upgrade": "Përmirëso",
+  "form.title": "Çfarë të aranzhojë Drini?",
+  "tab.text": "Përshkruaje me tekst",
+  "tab.audio": "Këndo ose regjistro",
+  "tab.upload": "Ngarko partiturë",
+  "form.describe": "Përshkruaj pjesën, instrumentet dhe karakterin",
+  "form.try": "Provo:",
+  "try.1": "Happy Birthday për kuartet harqesh",
+  "try.2": "Piano solo e lehtë, ninullë në F dur",
+  "try.3": "Himn SATB, 16 takte, D dur",
+  "up.reading": "Po lexoj partiturën…",
+  "up.hint": "Lësho partiturën këtu, zgjidh një skedar ose bëj një foto. MuseScore (.mscz), MusicXML, MIDI, PDF, ABC ose një foto e qartë e faqes.",
+  "up.choose": "Zgjidh skedarin",
+  "up.photo": "Bëj foto",
+  "up.remove": "Hiqe",
+  "up.read": "Çfarë lexoi Drini nga skedari (taktet e para):",
+  "up.photoAlt": "Partitura jote",
+  "up.extra": "Diçka që duhet ta dijë Drini? (opsionale)",
+  "up.extraPh": "P.sh.: bëje më të lehtë, mbaje tonalitetin origjinal, jepja melodinë violës",
+  "rec.listening": "Po dëgjoj… {time}",
+  "rec.listeningTail": " — këndo një linjë, pastaj shtyp Ndalo (deri në 0:30).",
+  "rec.finding": "Po gjej notat…",
+  "rec.yourMelody": "Melodia jote",
+  "rec.notes": "{n} nota",
+  "rec.likely": "ndoshta {key}, rreth {bpm} trokitje në minutë.",
+  "rec.hint": "Shtyp regjistro dhe këndo një linjë, ose ngarko një incizim. Më mirë funksionon një melodi e vetme.",
+  "rec.record": "Regjistro",
+  "rec.stop": "Ndalo",
+  "rec.upload": "Ngarko incizim",
+  "rec.phone": "Këndo në telefon",
+  "sel.ensemble": "Ansambli",
+  "sel.level": "Niveli",
+  "sel.key": "Tonaliteti",
+  "sel.style": "Stili",
+  "form.output": "Rezultati: partiturë · PDF · MIDI · MusicXML · ABC",
+  "form.arrange": "Aranzho me Drinin",
+  "form.arranging": "Drini po aranzhon…",
+  "form.template": "Shablloni: {name}. Ndrysho çfarë të duash, pastaj shtyp Aranzho.",
+  "form.templateAudio": " Fillimisht regjistro ose ngarko melodinë.",
+  "demo.label": "Modaliteti demo",
+  "demo.desc": "Provo aplikacionin me aranzhime shembull, pa harxhuar kredite AI.",
+  "score.example": "Shembull",
+  "score.by": "Aranzhuar nga Drini",
+  "score.bars": "{n} takte",
+  "score.draft": "Drafti {n}",
+  "score.play": "Luaj",
+  "score.pause": "Pauzë",
+  "score.transpose": "Transpono",
+  "score.now": "Tani në {key}",
+  "score.download": "Shkarko",
+  "dl.midi": "MIDI (.mid): hapet në MuseScore, Sibelius",
+  "dl.xml": "MusicXML (.musicxml): redakto në MuseScore, Sibelius, Finale",
+  "dl.abc": "Notacion ABC (.abc)",
+  "dl.pdf": "PDF (printo partiturën)",
+  "dl.midiDone": "MIDI u shkarkua.",
+  "dl.xmlDone": "MusicXML u shkarkua. Hape në MuseScore, Sibelius ose Finale.",
+  "dl.failed": "Nuk munda ta krijoj këtë skedar për këtë partiturë.",
+  "score.note": "Takti {n} · shënimi i Drinit",
+  "score.notePill": "Takti {n}: {text}",
+  "step.up1": "Një semiton lart",
+  "step.down1": "Një semiton poshtë",
+  "step.up2": "Një ton lart",
+  "step.down2": "Një ton poshtë",
+  "step.up12": "Një oktavë lart",
+  "step.down12": "Një oktavë poshtë",
+  "chat.sub": "Asistenti yt i aranzhimit",
+  "chat.ph": "Kërkoji Drinit të ndryshojë diçka…",
+  "chat.label": "Mesazh për Drinin",
+  "chat.send": "Dërgo",
+  "chat.q1": "Bëje më të lehtë",
+  "chat.q2": "Shto gishtërimin",
+  "chat.q3": "Jepja melodinë një zëri tjetër",
+  "chat.welcome": "Përshëndetje, jam Drini. Përshkruaj një pjesë, këndo një melodi ose ngarko një partiturë, zgjidh ansamblin dhe unë e shkruaj aranzhimin. Pastaj më kërko ndryshime këtu.",
+  "recent.new": "Aranzhim i ri",
+  "recent.title": "Të fundit",
+  "recent.empty": "Aranzhimet që shkruan Drini për ty shfaqen këtu, të ruajtura në këtë shfletues.",
+  "msg.fail": "Nuk munda ta përfundoj këtë. Provo sërish?",
+  "msg.unreadable": "Shkrova diçka që nuk mund ta lexoja si partiturë, prandaj e mbajta versionin e mëparshëm. Provo sërish?",
+  "msg.needMelody": "Fillimisht regjistro ose ngarko një melodi, pastaj shtyp Aranzho.",
+  "msg.needUpload": "Fillimisht ngarko një partiturë ose një foto të saj, pastaj shtyp Aranzho.",
+  "msg.needText": "Më thuaj fillimisht çfarë të aranzhoj: përshkruaj pjesën, instrumentet dhe karakterin.",
+  "msg.uploadFail": "Nuk munda të aranzhoj nga ky skedar. Një foto më e qartë, ose një skedar MuseScore/MusicXML, funksionon më mirë.",
+  "msg.opened": "Ja sërish \"{title}\". Më thuaj çfarë dëshiron të ndryshosh.",
+  "msg.transposed": "U transponua {step}: tani në {key}.",
+  "msg.transposedRange": " Disa nota tani dalin jashtë diapazonit të rehatshëm, shih shënimet poshtë partiturës.",
+  "msg.transposeFail": "Nuk munda ta transponoj këtë partiturë. Provo një hap tjetër, ose më kërko në chat.",
+  "msg.credits": " Ndërkohë, mund ta ndezësh modalitetin demo poshtë butonit Aranzho për ta provuar aplikacionin pa kredite AI.",
+  "demo.arranged": "Modaliteti demo: ja një shembull i gatshëm për {ensemble} (Oda e Gëzimit). Fike modalitetin demo dhe unë shkruaj një aranzhim të ri sipas kërkesës sate.",
+  "demo.source": "Modaliteti demo: ky është skedari yt ashtu siç e lexova. Fike modalitetin demo dhe unë e aranzhoj për {ensemble}.",
+  "demo.melody": "Modaliteti demo: ja melodia jote ashtu siç e dëgjova. Fike modalitetin demo dhe unë e aranzhoj për {ensemble}.",
+  "demo.photo": "Modaliteti demo nuk lexon foto ose PDF: kjo kërkon kredite AI. Ja një shembull në vend të saj.",
+  "demo.revise": "Në modalitetin demo nuk mund ta rishkruaj muzikën: kjo kërkon kredite AI. Mund ta luash, ta transponosh dhe ta shkarkosh.",
+  "rp.title": "Këndo melodinë tënde",
+  "rp.sub": "Këndo, mërmërite ose luaj një linjë. Drini e kthen në nota.",
+  "rp.listening": "Po dëgjoj… këndo një linjë, pastaj prek ndalo",
+  "rp.finding": "Po gjej notat…",
+  "rp.done": "U regjistrua · prek për ta regjistruar sërish",
+  "rp.idle": "Prek butonin dhe fillo të këndosh",
+  "rp.upload": "Ose ngarko një incizim",
+  "rp.heard": "Notat e dëgjuara",
+  "rp.likely": "Tonaliteti i mundshëm: {key} · rreth {bpm} trokitje në minutë",
+  "rp.for": "Aranzho për",
+  "rp.first": "Fillimisht regjistro një melodi",
+  "rp.back": "Kthehu",
+  "t.piano": "Piano",
+  "t.duet": "Duet piano",
+  "t.choir": "Kor",
+  "t.strings": "Harqe",
+  "t.guitar": "Kitarë",
+  "sc.title": "Partiturat e mia",
+  "sc.sub": "Çdo aranzhim që ka shkruar Drini për ty, i ruajtur në këtë shfletues.",
+  "sc.empty": "Ende pa partitura. Përshkruaj një pjesë ose këndo një melodi dhe aranzhimet e Drinit ruhen këtu.",
+  "sc.go": "Shko te Studio",
+  "tp.title": "Shabllonet",
+  "tp.sub": "Fillo nga një kërkesë e gatshme, pastaj thuaji Drinit çfarë të ndryshojë.",
+  "tp.use": "Përdor shabllonin",
+  "pr.title": "Çmime të thjeshta",
+  "pr.sub": "Fillo falas. Përmirëso kur Drini bëhet pjesë e mësimdhënies ose e biznesit tënd.",
+  "pr.month": "/ muaj",
+  "pr.soon": "Së shpejti",
+  "pr.current": "Plani aktual",
+  "pr.note": "Pagesat ende nuk janë aktivizuar. Çmimet janë në euro.",
+  "nav.mArrange": "Aranzho",
+  "nav.mScore": "Partitura",
+  "nav.mChat": "Chat",
+  "rec.err.quiet": "Nuk dëgjova një melodi të qartë. Provo të këndosh pak më fort, një notë nga një, në një vend të qetë.",
+  "rec.err.read": "Nuk munda ta lexoj këtë audio. Provo një incizim tjetër ose një skedar MP3, WAV ose M4A.",
+  "rec.err.browser": "Ky shfletues nuk mund të regjistrojë audio. Ngarko një incizim në vend të kësaj.",
+  "rec.err.mic": "Më duhet leja për mikrofonin. Lejoje në shfletues, ose ngarko një incizim.",
+  "pr.free": "Falas",
+  "pr.freeBlurb": "Për ta provuar Drinin.",
+  "pr.pro": "Pro",
+  "pr.proBlurb": "Për mësues dhe muzikantë.",
+  "pr.studio": "Studio",
+  "pr.studioBlurb": "Për shkolla, korë dhe aranzhues.",
+  "pr.f.free1": "5 aranzhime në muaj",
+  "pr.f.free2": "Përshkruaj, këndo ose ngarko partiturë",
+  "pr.f.free3": "Shkarkim në PDF, MusicXML, MIDI dhe ABC",
+  "pr.f.free4": "Modaliteti demo për ta eksploruar",
+  "pr.f.pro1": "100 aranzhime në muaj",
+  "pr.f.pro2": "Lexon foto dhe PDF të partiturave",
+  "pr.f.pro3": "Çdo ansambël dhe nivel",
+  "pr.f.pro4": "Partiturat ruhen në llogarinë tënde (së shpejti)",
+  "pr.f.st1": "300 aranzhime në muaj",
+  "pr.f.st2": "Gjithçka nga Pro",
+  "pr.f.st3": "Përdorim komercial i aranzhimeve",
+  "pr.f.st4": "Deri në 3 mësues (së shpejti)",
+};
+
+const DICT: Record<Lang, Record<Key, string>> = { en, sq };
+
+export function getLang(): Lang {
+  try { return localStorage.getItem(KEY) === "sq" ? "sq" : "en"; } catch { return "en"; }
+}
+
+export function setLang(l: Lang) {
+  try { localStorage.setItem(KEY, l); window.dispatchEvent(new Event(EVENT)); } catch { /* ignore */ }
+}
+
+function fill(s: string, vars?: Record<string, string | number>) {
+  return vars ? s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`)) : s;
+}
+
+/** Translate outside React (e.g. chat messages written by the Drini hook). */
+export function tr(key: Key, vars?: Record<string, string | number>, lang: Lang = getLang()) {
+  return fill(DICT[lang][key], vars);
+}
+
+/** Current language and a translate function; English during server render, real choice after mount. */
+export function useLang() {
+  const [lang, setL] = useState<Lang>("en");
+  useEffect(() => {
+    const sync = () => setL(getLang());
+    sync();
+    window.addEventListener(EVENT, sync);
+    return () => window.removeEventListener(EVENT, sync);
+  }, []);
+  const t = (key: Key, vars?: Record<string, string | number>) => fill(DICT[lang][key], vars);
+  return { lang, t, setLang };
+}
+
+// ---- music words ----
+
+const NOTE_SQ: Record<string, string> = {
+  C: "C", "C#": "C diez", Db: "D bemol", D: "D", "D#": "D diez", Eb: "E bemol", E: "E", F: "F", "F#": "F diez",
+  Gb: "G bemol", G: "G", "G#": "G diez", Ab: "A bemol", A: "A", "A#": "A diez", Bb: "B", B: "H", Cb: "C bemol",
+};
+
+/** Note name in the interface language: B → H and Bb → B in Albanian (German naming). */
+export function noteName(n: string, lang: Lang) {
+  const clean = n.replace("♯", "#").replace("♭", "b");
+  return lang === "sq" ? NOTE_SQ[clean] ?? n : n.replace("#", "♯").replace(/^([A-G])b$/, "$1♭");
+}
+
+/** "G major" → "G dur", "Bb major" → "B dur", "F# minor" → "f diez mol". */
+export function keyName(k: string, lang: Lang) {
+  if (lang !== "sq") return k;
+  if (/keep original/i.test(k)) return "Mbaje origjinalin";
+  const m = /^([A-G][#b]?)\s+(major|minor)/i.exec(k.trim());
+  if (!m) return k;
+  const n = NOTE_SQ[m[1]!] ?? m[1]!;
+  return /minor/i.test(m[2]!) ? `${n.charAt(0).toLowerCase()}${n.slice(1)} mol` : `${n} dur`;
+}
+
+const OPTIONS_SQ: Record<string, string> = {
+  "Piano 4 hands": "Piano me 4 duar",
+  "Solo piano": "Piano solo",
+  "Piano + strings (2 violins, viola)": "Piano + harqe (2 violina, violë)",
+  "String quartet": "Kuartet harqesh",
+  "String orchestra": "Orkestër harqesh",
+  "Flute + piano": "Flaut + piano",
+  "Wind quartet": "Kuartet frymorësh",
+  "SATB choir": "Kor SATB",
+  "SA choir + piano": "Kor SA + piano",
+  "Guitar": "Kitarë",
+  "Lead sheet": "Melodi me akorde (lead sheet)",
+  "Easy": "I lehtë",
+  "Intermediate": "Mesatar",
+  "Advanced": "I avancuar",
+  "Lyrical": "Lirik",
+  "Classical": "Klasik",
+  "Pop": "Pop",
+  "Jazz": "Xhaz",
+  "Folk": "Popullor",
+};
+
+/** Label for a form option; the value sent to Drini stays in English. */
+export function optionLabel(v: string, lang: Lang) {
+  if (lang !== "sq") return v;
+  return OPTIONS_SQ[v] ?? keyName(v, lang);
+}
+
+const CHECK_SQ: [RegExp, string][] = [
+  [/^Score parses$/, "Partitura lexohet"],
+  [/^Score didn't parse$/, "Partitura nuk lexohet"],
+  [/^Every bar adds up$/, "Çdo takt është i plotë"],
+  [/^Bar lengths off in (\d+) bars?$/, "Gjatësi e gabuar në $1 takte"],
+  [/^Voices line up · (\d+) bars$/, "Zërat përputhen · $1 takte"],
+  [/^Voices don't line up$/, "Zërat nuk përputhen"],
+  [/^Ranges checked$/, "Diapazonet në rregull"],
+  [/^(.+) goes outside (.+) in bar (\d+)$/, "$1 del jashtë $2 në taktin $3"],
+  [/^No parallel 5ths \/ 8ves$/, "Pa kuinta / oktava paralele"],
+  [/^Parallel 5ths \/ 8ves in bar (\d+)$/, "Kuinta / oktava paralele në taktin $1"],
+  [/^Voices cross in bar (\d+)$/, "Zërat kryqëzohen në taktin $1"],
+  [/^Wide spacing in bar (\d+)$/, "Largësi e madhe mes zërave në taktin $1"],
+  [/^Wide hand stretch in bar (\d+)$/, "Shtrirje e gjerë e dorës në taktin $1"],
+  [/^Dynamics marked$/, "Dinamika e shënuar"],
+  [/^No starting dynamic: (.+)$/, "Pa dinamikë në fillim: $1"],
+  [/^Final fermata$/, "Koronë në fund"],
+  [/^No fermata on the final chord$/, "Pa koronë në akordin e fundit"],
+];
+
+export function checkLabel(label: string, lang: Lang) {
+  if (lang !== "sq") return label;
+  for (const [re, out] of CHECK_SQ) if (re.test(label)) return label.replace(re, out);
+  return label;
+}

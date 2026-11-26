@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const lang = z.enum(["en", "sq"]).optional();
+
+/** Asks Drini to write its chat text in Albanian with Drin's terminology when the interface is in Albanian. */
+function langNote(l?: "en" | "sq") {
+  return l === "sq"
+    ? `\n\nWrite "summary" and every "notes" text in Albanian, using these music terms: dur/mol (not major/minor), diez/bemol, German note names (H for B natural, B for B flat), kuintakord, gradë, I – Tonik (T), IV – Subdominant (S), V – Dominant (D), takt, trokitje, nota katërshe, terc e madhe / terc e vogël, koronë. The ABC itself stays standard ABC.`
+    : "";
+}
+
 const arrangeInput = z.object({
   description: z.string().max(2000),
   ensemble: z.string().max(60),
@@ -8,6 +17,7 @@ const arrangeInput = z.object({
   key: z.string().max(30),
   style: z.string().max(30),
   source: z.string().max(30000).optional(),
+  lang,
 });
 
 const fileInput = z.object({
@@ -19,12 +29,14 @@ const fileInput = z.object({
   level: z.string().max(30),
   key: z.string().max(30),
   style: z.string().max(30),
+  lang,
 });
 
 const reviseInput = z.object({
   abc: z.string().min(1).max(20000),
   message: z.string().min(1).max(4000),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(4000) })).max(20),
+  lang,
 });
 
 export const arrange = createServerFn({ method: "POST" })
@@ -39,7 +51,8 @@ export const arrange = createServerFn({ method: "POST" })
           (data.source
             ? `\n\nSOURCE SCORE, imported from the user's file (ABC; rhythms rounded to sixteenths, so tidy obvious slips). ` +
               `Keep its melody and harmony recognisable and arrange it for the requested ensemble, level and key ("Keep original" means its own key):\n${data.source}`
-            : ""),
+            : "") +
+          langNote(data.lang),
       },
     ]);
   });
@@ -57,9 +70,10 @@ export const arrangeFromFile = createServerFn({ method: "POST" })
             type: "text",
             text:
               `The attached ${data.mediaType === "application/pdf" ? "PDF" : "photo"} ("${data.fileName}") is sheet music the user wants arranged. ` +
-              `First read it carefully: title, key, time signature, the melody, and the harmony or bass if shown (use at most the first 32 bars). ` +
+              `First read it carefully: title, key, time signature, the melody, and the harmony or bass if shown (use at most the first 64 bars). ` +
               `Then write a new arrangement of it.\nDescription: ${data.description || "(none)"}\nEnsemble: ${data.ensemble}\nLevel: ${data.level}\nKey: ${data.key} ("Keep original" means the key on the page)\nStyle: ${data.style}\n` +
-              `If parts of the page are unreadable, arrange what you can read and say so in "summary". If it is not sheet music, explain that in "summary" and return a short placeholder score.`,
+              `If parts of the page are unreadable, arrange what you can read and say so in "summary". If it is not sheet music, explain that in "summary" and return a short placeholder score.` +
+              langNote(data.lang),
           },
           { type: "file", data: data.data, mediaType: data.mediaType, filename: data.fileName },
         ],
@@ -75,7 +89,7 @@ export const revise = createServerFn({ method: "POST" })
       ...data.history.map((h) => ({ role: h.role, content: h.content })),
       {
         role: "user",
-        content: `Here is the current score in ABC:\n${data.abc}\n\nRevise it: ${data.message}\n\nReturn the full revised score. In "summary", explain exactly what changed.`,
+        content: `Here is the current score in ABC:\n${data.abc}\n\nRevise it: ${data.message}\n\nReturn the full revised score. In "summary", explain exactly what changed.${langNote(data.lang)}`,
       },
     ]);
   });

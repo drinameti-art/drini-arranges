@@ -11,7 +11,7 @@ Output rules:
 - Use \`%%score\` with one V: line per part. Each V: line has \`clef=\` and \`name=\`; for piano 4 hands use Primo (treble) and Secondo (bass).
 - Every voice has the same number of bars, and every bar adds up exactly to the meter.
 - End the piece on the tonic with a final barline |].
-- Default length 16 bars unless asked; never more than 32.
+- Default length 16 bars unless asked; never more than 64. Use repeat signs (|: :|) and first/second endings for repeated sections.
 
 Musical rules:
 - Keep each part in a comfortable range:

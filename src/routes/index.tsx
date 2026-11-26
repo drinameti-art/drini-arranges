@@ -8,7 +8,8 @@ import { ScoreCard } from "@/components/drini/ScoreCard";
 import { DriniChat } from "@/components/drini/DriniChat";
 import { useDrini } from "@/components/drini/useDrini";
 import { findScore } from "@/components/drini/library";
-import { findTemplate } from "@/components/drini/templates";
+import { findTemplate, templateText } from "@/components/drini/templates";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,7 +38,8 @@ function Studio() {
   const navigate = useNavigate({ from: "/" });
   const drini = useDrini();
   const template = search.template ? findTemplate(search.template) : null;
-  const preset = template ? { id: template.id, title: template.title, request: template.request } : null;
+  const { t, lang } = useLang();
+  const preset = template ? { id: template.id, title: templateText(template, lang).title, request: template.request } : null;
   const arrange = drini.arrange;
 
   const handedOff = useRef(false);
@@ -59,8 +61,15 @@ function Studio() {
 
   return (
     <PageShell>
+      <nav className="sticky top-0 z-10 flex gap-1 border-b border-border bg-background/95 px-4 py-2 backdrop-blur lg:hidden" aria-label="Studio sections">
+        {([["arrange", "nav.mArrange"], ["score", "nav.mScore"], ["chat", "nav.mChat"]] as const).map(([id, label]) => (
+          <a key={id} href={`#${id}`} className="flex min-h-10 flex-1 items-center justify-center rounded-full bg-paper text-sm font-medium text-ink shadow-sm">
+            {t(label)}
+          </a>
+        ))}
+      </nav>
       <main className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 md:px-6 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
-        <RecentList
+        <div className="order-last lg:order-none"><RecentList
           selectedId={drini.currentId}
           onOpen={(s) => void drini.open(s)}
           onNew={() => {
@@ -68,7 +77,7 @@ function Studio() {
             el?.scrollIntoView({ behavior: "smooth", block: "center" });
             el?.focus();
           }}
-        />
+        /></div>
         <div className="min-w-0 space-y-6">
           <ArrangeForm loading={drini.arranging} onArrange={(r) => void arrange(r)} initialMode={search.tab === "audio" || template?.request.mode === "audio" ? "audio" : "text"} preset={preset} />
           <ScoreCard score={drini.score} checks={drini.checks} draft={drini.draft} refreshing={drini.busy} onTranspose={(n, label) => void drini.transpose(n, label)} />
@@ -77,7 +86,7 @@ function Studio() {
       </main>
       <Link
         to="/record"
-        aria-label="Hum your melody"
+        aria-label={t("rp.title")}
         className="fixed bottom-5 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary-hover md:hidden"
       >
         <Mic className="h-6 w-6" />

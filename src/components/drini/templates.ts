@@ -79,3 +79,17 @@ export const templates: Template[] = [
 ];
 
 export const findTemplate = (id: string) => templates.find((t) => t.id === id) ?? null;
+
+const SQ: Record<string, { title: string; desc: string; tags: string[] }> = {
+  "piano-duet": { title: "Duet piano për nxënës", desc: "Dy pianistë, një piano. Një secondo e thjeshtë nën një primo që këndon.", tags: ["I lehtë", "4 duar"] },
+  "satb-hymn": { title: "Himn SATB", desc: "Shkrim korali me katër zëra, me lëvizje të pastër të zërave dhe diapazone të rregullta.", tags: ["Kor", "Mesatar"] },
+  "quartet-wedding": { title: "Kuartet harqesh për dasmë", desc: "Një aranzhim i ngrohtë dhe lirik për hyrjen ose nënshkrimin.", tags: ["Harqe", "I avancuar"] },
+  "guitar-solo": { title: "Kitarë solo (fingerstyle)", desc: "Melodia sipër, me bas të butë dhe arpezhe poshtë.", tags: ["Kitarë", "Mesatar"] },
+  "children-choir": { title: "Kor fëmijësh, SA + piano", desc: "Dy zëra të lartë në diapazone të rehatshme, me piano mbështetëse.", tags: ["Kor", "I lehtë"] },
+  "lead-sheet": { title: "Melodi me akorde nga këndimi", desc: "Këndo një melodi dhe merr notat me akordet sipër tyre.", tags: ["Çdo instrument", "Shpejt"] },
+};
+
+/** Title, description and tags in the interface language. */
+export function templateText(t: Template, lang: "en" | "sq") {
+  return lang === "sq" && SQ[t.id] ? SQ[t.id]! : { title: t.title, desc: t.desc, tags: t.tags };
+}

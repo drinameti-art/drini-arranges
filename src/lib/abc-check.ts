@@ -142,7 +142,45 @@ export function checkAbcWith(abcjs: any, abc: string): CheckResult {
     if (issues.length) problems.push(`Voice-leading problems: ${issues.slice(0, 6).map((x) => x.text).join("; ")}.`);
   }
 
+  // Notation habits (shown as pills only; never sent to the fix pass, which would cost AI credits).
+  const music = voiceMusic(abc);
+  const noDyn = [...music.entries()]
+    .filter(([, m]) => {
+      // mask decorations and annotations so "!mf!" or "^text" letters don't count as notes
+      const masked = m.replace(/![^!]*!|"[^"]*"/g, (x) => " ".repeat(x.length));
+      const head = m.slice(0, Math.max(0, masked.search(/[A-Ga-gz]/)));
+      return !/!(p{1,3}|mp|mf|f{1,3}|sfz|fp)!/.test(head);
+    })
+    .map(([id]) => voiceLabel(abc, id));
+  if (music.size) checks.push(noDyn.length ? { ok: false, label: `No starting dynamic: ${noDyn.slice(0, 3).join(", ")}` } : { ok: true, label: "Dynamics marked" });
+  if (music.size) checks.push(/!fermata!|(^|[\s|[(])H[\^_=]?[A-Ga-g]/.test(abc) ? { ok: true, label: "Final fermata" } : { ok: false, label: "No fermata on the final chord" });
+
   return { checks, problems };
+}
+
+/** Music text of each voice, keyed by voice id (handles both "V:1" lines and inline "[V:1]"). */
+function voiceMusic(abc: string): Map<string, string> {
+  const out = new Map<string, string>();
+  let cur = "1";
+  let inBody = false;
+  for (const raw of abc.split("\n")) {
+    const line = raw.replace(/%.*$/, "");
+    const v = /^V:\s*(\S+)/.exec(line);
+    if (v) { cur = v[1]!; continue; }
+    if (/^K:/.test(line)) { inBody = true; continue; }
+    if (!inBody || /^[A-Za-z]:/.test(line)) continue;
+    let rest = line;
+    const inline = /^\[V:\s*([^\]\s]+)[^\]]*\]/.exec(rest);
+    if (inline) { cur = inline[1]!; rest = rest.slice(inline[0].length); }
+    if (!rest.trim()) continue;
+    out.set(cur, (out.get(cur) ?? "") + " " + rest.trim());
+  }
+  return out;
+}
+
+function voiceLabel(abc: string, id: string) {
+  const re = new RegExp(`^V:\\s*${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b[^\\n]*name="([^"]+)"`, "m");
+  return re.exec(abc)?.[1] ?? `Voice ${id}`;
 }
 
 export async function checkAbc(abc: string): Promise<CheckResult> {

@@ -2,27 +2,29 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Spark } from "./Logo";
 import type { Msg } from "./useDrini";
+import { useLang } from "@/lib/i18n";
 
 export function DriniChat({ msgs, busy, onSend }: { msgs: Msg[]; busy: boolean; onSend: (text: string) => void }) {
   const [text, setText] = useState("");
+  const { t } = useLang();
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => { end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [msgs, busy]);
 
-  const send = (t: string) => {
-    const v = t.trim();
+  const send = (q: string) => {
+    const v = q.trim();
     if (!v || busy) return;
     setText("");
     onSend(v);
   };
 
   return (
-    <aside className="flex h-full min-h-[520px] flex-col rounded-[20px] bg-ink p-4 text-cream">
+    <aside id="chat" className="flex h-full scroll-mt-20 min-h-[520px] flex-col rounded-[20px] bg-ink p-4 text-cream">
       <div className="flex items-center gap-3 border-b border-cream/10 pb-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-primary"><Spark className="h-4 w-4" /></div>
         <div>
           <p className="font-display text-lg font-semibold leading-tight">Drini</p>
-          <p className="text-xs text-cream/60">Your arranging assistant</p>
+          <p className="text-xs text-cream/60">{t("chat.sub")}</p>
         </div>
       </div>
 
@@ -30,16 +32,16 @@ export function DriniChat({ msgs, busy, onSend }: { msgs: Msg[]; busy: boolean; 
         {msgs.map((m, i) => (
           <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
             <p className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.from === "user" ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-ink-soft text-cream"}`}>
-              {m.text}
+              {m.key ? t(m.key) : m.text}
             </p>
           </div>
         ))}
-        {busy && <p className="w-fit rounded-2xl rounded-bl-md bg-ink-soft px-3.5 py-2.5 text-sm text-cream/60">Drini is writing…</p>}
+        {busy && <p className="w-fit rounded-2xl rounded-bl-md bg-ink-soft px-3.5 py-2.5 text-sm text-cream/60">{t("form.arranging")}</p>}
         <div ref={end} />
       </div>
 
       <div className="flex flex-wrap gap-2 pb-3">
-        {["Yes, smooth it", "Keep the leap", "Add fingering"].map((q) => (
+        {[t("chat.q1"), t("chat.q2"), t("chat.q3")].map((q) => (
           <button key={q} disabled={busy} onClick={() => send(q)} className="pill disabled:opacity-50 min-h-9 border border-cream/20 text-cream/90 transition-colors hover:border-gold hover:text-gold">{q}</button>
         ))}
       </div>
@@ -48,11 +50,11 @@ export function DriniChat({ msgs, busy, onSend }: { msgs: Msg[]; busy: boolean; 
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Ask Drini to change something…"
-          aria-label="Message Drini"
+          placeholder={t("chat.ph")}
+          aria-label={t("chat.label")}
           className="min-h-11 flex-1 bg-transparent px-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none"
         />
-        <button type="submit" disabled={busy} aria-label="Send" className="flex disabled:opacity-50 h-11 w-11 items-center justify-center rounded-[10px] bg-primary text-primary-foreground hover:bg-primary-hover">
+        <button type="submit" disabled={busy} aria-label={t("chat.send")} className="flex disabled:opacity-50 h-11 w-11 items-center justify-center rounded-[10px] bg-primary text-primary-foreground hover:bg-primary-hover">
           <ArrowUp className="h-4 w-4" />
         </button>
       </form>

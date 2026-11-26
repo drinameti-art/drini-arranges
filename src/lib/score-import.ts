@@ -10,7 +10,7 @@ export type ScoreSource =
   | { kind: "abc"; fileName: string; abc: string; info: string }
   | { kind: "image" | "pdf"; fileName: string; mediaType: string; data: string; previewUrl: string | null; info: string };
 
-const MAX_BARS = 32;
+const MAX_BARS = 64;
 const MAX_PARTS = 8;
 
 // ---------- entry point ----------

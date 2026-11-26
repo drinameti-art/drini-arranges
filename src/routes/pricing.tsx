@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { PageShell } from "@/components/drini/TopBar";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -17,32 +18,34 @@ export const Route = createFileRoute("/pricing")({
 });
 
 const tiers = [
-  { name: "Free", blurb: "For trying Drini out.", features: ["10 arrangements a month", "PDF export", "Up to 2 instruments"], cta: "Current plan", featured: false },
-  { name: "Pro", blurb: "For teachers and players.", features: ["Unlimited arrangements", "PDF, MusicXML and MIDI", "Any ensemble", "Hum-to-score"], cta: "Upgrade to Pro", featured: true },
-  { name: "Studio", blurb: "For schools and studios.", features: ["Everything in Pro", "5 seats", "Shared score library", "Priority arranging"], cta: "Talk to us", featured: false },
-];
+  { name: "pr.free", blurb: "pr.freeBlurb", price: "€0", features: ["pr.f.free1", "pr.f.free2", "pr.f.free3", "pr.f.free4"], cta: "pr.current", featured: false },
+  { name: "pr.pro", blurb: "pr.proBlurb", price: "€9", features: ["pr.f.pro1", "pr.f.pro2", "pr.f.pro3", "pr.f.pro4"], cta: "pr.soon", featured: true },
+  { name: "pr.studio", blurb: "pr.studioBlurb", price: "€19", features: ["pr.f.st1", "pr.f.st2", "pr.f.st3", "pr.f.st4"], cta: "pr.soon", featured: false },
+] as const;
 
 function Pricing() {
+  const { t } = useLang();
   return (
     <PageShell>
       <main className="mx-auto max-w-5xl px-4 py-12 md:px-6">
         <div className="text-center">
-          <h1 className="text-4xl text-ink md:text-5xl">Simple pricing</h1>
-          <p className="mt-3 text-graphite">Pick the plan that fits how much music you make.</p>
+          <h1 className="text-4xl text-ink md:text-5xl">{t("pr.title")}</h1>
+          <p className="mt-3 text-graphite">{t("pr.sub")}</p>
         </div>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {tiers.map((t) => (
-            <div key={t.name} className={`flex flex-col rounded-[20px] border p-7 ${t.featured ? "border-ink bg-ink text-cream" : "border-border bg-paper text-ink"}`}>
-              <h2 className="text-2xl">{t.name}</h2>
-              <p className={`mt-1 text-sm ${t.featured ? "text-cream/70" : "text-graphite"}`}>{t.blurb}</p>
-              <p className="mt-6 font-display text-4xl font-semibold">[PRICE]<span className="text-base font-normal opacity-70"> / month</span></p>
+          {tiers.map((tier) => (
+            <div key={tier.name} className={`flex flex-col rounded-[20px] border p-7 ${tier.featured ? "border-ink bg-ink text-cream" : "border-border bg-paper text-ink"}`}>
+              <h2 className="text-2xl">{t(tier.name)}</h2>
+              <p className={`mt-1 text-sm ${tier.featured ? "text-cream/70" : "text-graphite"}`}>{t(tier.blurb)}</p>
+              <p className="mt-6 font-display text-4xl font-semibold">{tier.price}<span className="text-base font-normal opacity-70"> {t("pr.month")}</span></p>
               <ul className="mt-6 flex-1 space-y-3 text-sm">
-                {t.features.map((f) => <li key={f} className="flex gap-2"><Check className={`h-4 w-4 shrink-0 ${t.featured ? "text-gold" : "text-primary"}`} />{f}</li>)}
+                {tier.features.map((f) => <li key={f} className="flex gap-2"><Check className={`h-4 w-4 shrink-0 ${tier.featured ? "text-gold" : "text-primary"}`} />{t(f)}</li>)}
               </ul>
-              <button className={`btn mt-8 ${t.featured ? "btn-primary" : "btn-outline"}`}>{t.cta}</button>
+              <button disabled className={`btn mt-8 ${tier.featured ? "btn-primary" : "btn-outline"} disabled:cursor-default disabled:opacity-70`}>{t(tier.cta)}</button>
             </div>
           ))}
         </div>
+        <p className="mt-8 text-center text-sm text-graphite">{t("pr.note")}</p>
       </main>
     </PageShell>
   );
