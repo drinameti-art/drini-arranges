@@ -23,6 +23,8 @@ Musical rules:
   - Piano: each hand within an octave span
   - SA choir + piano: two treble voices (Soprano, Alto, both C4–D5) plus a piano part (right and left hand)
   - Lead sheet: a single melody staff with chord symbols in quotes above the notes, e.g. "G" "D7"
+- Keep every part on its own staff: at most one ledger line above or below (treble clef C4–B5, alto clef D3–C5, tenor clef B2–A4, bass clef E2–D4). Choose the clef that fits each part, move a line up or down an octave, or hand a high or low passage to another part; never leave notes floating on many ledger lines, and do not use 8va.
+- Text in the score is only for performers (tempo and character words, dynamics, pizz./arco and similar); never write editorial comments in the score.
 - Avoid parallel 5ths and octaves between outer voices.
 - Resolve the leading tone up to the tonic at cadences.
 - Use clear cadences: I – IV – V – I, with V–I at phrase ends.

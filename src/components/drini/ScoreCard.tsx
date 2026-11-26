@@ -64,9 +64,8 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
     }
   };
 
-  const sheetBox = useRef<HTMLDivElement>(null);
   const metaLine = [t("score.by"), keyName(score.key, lang), score.meter, t("score.bars", { n: score.bars })].filter(Boolean).join(" · ");
-  const print = () => printScore(score.title, metaLine, sheetBox.current);
+  const print = () => void printScore(score.title, metaLine, score.abc);
 
   const highlights = score.notes.map((n) => ({ bar: n.bar, label: t("score.note", { n: n.bar }) }));
 
@@ -116,7 +115,7 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
       </div>
 
       <div className="score-scroll mt-5 overflow-x-auto rounded-2xl border border-border bg-paper px-2 py-3">
-        <div className="min-w-[680px]" ref={sheetBox}>
+        <div className="min-w-[680px]">
           <ScoreSheet ref={sheet} abc={score.abc} highlights={highlights} onEnded={() => { setPlaying(false); setStarted(false); }} />
         </div>
       </div>

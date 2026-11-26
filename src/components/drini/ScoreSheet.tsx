@@ -1,6 +1,10 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
+import { withInstruments } from "@/lib/abc-tools";
 
 export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
+
+// Only one score plays at a time: starting one silences any older player (a previous draft, the upload preview…).
+let activeStop: (() => void) | null = null;
 
 export type Highlight = { bar: number; label: string };
 type Props = { abc: string; highlights?: Highlight[]; onEnded?: () => void };
@@ -13,34 +17,39 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
   const el = useRef<HTMLDivElement>(null);
   const highlightKey = highlights.map((h) => `${h.bar}:${h.label}`).join("|");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state = useRef<{ abcjs?: any; visual?: any; synth?: any; timer?: any }>({});
+  const state = useRef<{ abcjs?: any; visual?: any; synth?: any; timer?: any; abc?: string }>({});
+  const ready = useRef<Promise<void>>(Promise.resolve());
+  const abcNow = useRef(abc);
+  abcNow.current = abc;
 
   useEffect(() => {
     let cancelled = false;
-    void import("abcjs").then((mod) => {
+    ready.current = import("abcjs").then((mod) => {
       const abcjs = mod.default ?? mod;
       if (cancelled || !el.current) return;
-      const [visual] = abcjs.renderAbc(el.current, abc, {
+      const [visual] = abcjs.renderAbc(el.current, withInstruments(abc), {
         responsive: "resize",
         add_classes: true,
         staffwidth: 760,
         paddingtop: 28,
         foregroundColor: "#17162B",
       });
-      state.current = { abcjs, visual };
+      // keep a running player if only the highlights changed; anything else starts fresh
+      const old = state.current;
+      if (old.abc !== abc) { old.synth?.stop(); old.timer?.stop(); }
+      state.current = old.abc === abc ? { ...old, abcjs, visual } : { abcjs, visual, abc };
       for (const h of highlights) drawHighlight(el.current, h.bar, h.label);
     });
-    return () => {
-      cancelled = true;
-      state.current.synth?.stop();
-      state.current.timer?.stop();
-    };
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abc, highlightKey]);
 
   useImperativeHandle(ref, () => ({
     async play() {
-      const { abcjs, visual } = state.current;
+      activeStop?.();
+      await ready.current; // the score on screen must be rendered before it is played
+      const { abcjs, visual, abc: drawn } = state.current;
+      if (drawn !== abcNow.current) return;
       if (!abcjs?.synth?.supportsAudio()) return;
       // AudioContext must be created inside the user's click.
       const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -61,6 +70,7 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
       await synth.prime();
       state.current.synth = synth;
       state.current.timer = timer;
+      activeStop = () => { synth.stop(); timer.stop(); clear(); onEnded?.(); };
       synth.start();
       timer.start();
     },
@@ -77,6 +87,10 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
       state.current.timer?.stop();
     },
   }));
+
+  // Leaving the page or replacing the score stops its sound.
+  useEffect(() => () => { state.current.synth?.stop(); state.current.timer?.stop(); }, []);
+  useEffect(() => { state.current.synth?.stop(); state.current.timer?.stop(); }, [abc]);
 
   return <div ref={el} className="score-sheet w-full" />;
 });

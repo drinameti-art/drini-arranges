@@ -29,7 +29,7 @@ export async function transposeAbc(abc: string, semitones: number): Promise<stri
 export async function downloadMidi(abc: string, fileBase: string) {
   const lib = await abcjs();
   const [visual] = lib.renderAbc("*", abc);
-  const files: unknown = lib.synth.getMidiFile(visual, { midiOutputType: "binary" });
+  const files: unknown = lib.synth.getMidiFile(lib.renderAbc("*", withInstruments(abc))[0], { midiOutputType: "binary" });
   const data = Array.isArray(files) ? files[0] : files;
   if (!data) throw new Error("midi failed");
   download(new Blob([data as BlobPart], { type: "audio/midi" }), `${fileBase}.mid`);
@@ -62,23 +62,51 @@ export function fileSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "drini-score";
 }
 
-/** Print just the score in its own window: clean pages, no app chrome, no highlight boxes. */
-export function printScore(title: string, meta: string, root: HTMLElement | null) {
-  const svgs = Array.from(root?.querySelectorAll("svg") ?? []).map((svg) => {
-    const copy = svg.cloneNode(true) as SVGSVGElement;
-    copy.querySelectorAll(".drini-hl").forEach((n) => n.remove());
-    copy.querySelectorAll(".abcjs-playing, .abcjs-note_selected").forEach((n) => n.classList.remove("abcjs-playing", "abcjs-note_selected"));
-    copy.removeAttribute("style");
-    copy.setAttribute("width", "100%");
-    return copy.outerHTML;
+/** Print just the score in its own window: one image per system so pages break between systems, no app chrome. */
+export async function printScore(title: string, meta: string, abc: string) {
+  const w = window.open("", "_blank"); // open first, inside the click, so pop-up blockers allow it
+  const lib = await abcjs();
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;left:-10000px;top:0;width:800px";
+  document.body.appendChild(box);
+  lib.renderAbc(box, abc, { oneSvgPerLine: true, staffwidth: 720, paddingtop: 8, paddingbottom: 8, foregroundColor: "#17162B" });
+  const svgs = Array.from(box.querySelectorAll("svg")).map((svg) => {
+    svg.removeAttribute("style");
+    svg.setAttribute("width", "100%");
+    return svg.outerHTML;
   });
-  const w = window.open("", "_blank");
+  box.remove();
   if (!w) { window.print(); return; }
   const esc = (x: string) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
-<style>@page{margin:14mm}body{font-family:Georgia,serif;color:#17162B;margin:0}h1{font-size:20px;margin:0 0 2px}p{font:12px Inter,Arial,sans-serif;color:#5C5868;margin:0 0 10px}svg{display:block;max-width:100%;height:auto}</style>
+<style>@page{margin:14mm}body{font-family:Georgia,serif;color:#17162B;margin:0}h1{font-size:20px;margin:0 0 2px}p{font:12px Inter,Arial,sans-serif;color:#5C5868;margin:0 0 8px}svg{display:block;max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}</style>
 </head><body><h1>${esc(title)}</h1><p>${esc(meta)}</p>${svgs.join("")}</body></html>`);
   w.document.close();
   w.focus();
-  setTimeout(() => { w.print(); }, 300);
+  setTimeout(() => { w.print(); }, 400);
+}
+
+const PROGRAMS: [RegExp, number][] = [
+  [/piccolo/i, 72], [/flute|flaut/i, 73], [/oboe/i, 68], [/clarinet/i, 71], [/bassoon|fagot/i, 70], [/horn/i, 60],
+  [/trumpet/i, 56], [/trombone/i, 57], [/tuba/i, 58], [/sax/i, 65],
+  [/contrabass|double bass|kontrabas/i, 43], [/cello|violonçel/i, 42], [/viola|violë/i, 41], [/violin|violinë/i, 40],
+  [/soprano|alto|tenor|baritone|choir|kor|^bass$|^bass\b/i, 52],
+  [/guitar|kitar/i, 24], [/harp/i, 46],
+];
+
+/** Adds a MIDI instrument per voice so playback sounds like the ensemble (violins, cello, flute…) instead of piano. */
+export function withInstruments(abc: string): string {
+  if (/%%MIDI\s+program/.test(abc)) return abc;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const line of abc.split("\n")) {
+    out.push(line);
+    const m = /^V:\s*(\S+)(.*)$/.exec(line);
+    if (!m || seen.has(m[1]!)) continue;
+    seen.add(m[1]!);
+    const name = /(?:name|nm)="([^"]+)"/.exec(m[2] ?? "")?.[1] ?? "";
+    const prog = PROGRAMS.find(([re]) => re.test(name))?.[1];
+    if (prog !== undefined) out.push(`%%MIDI program ${prog}`); // directly after the voice's first V: line
+  }
+  return out.join("\n");
 }

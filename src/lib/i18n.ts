@@ -420,6 +420,8 @@ const CHECK_SQ: [RegExp, string][] = [
   [/^Wide spacing in bar (\d+)$/, "Largësi e madhe mes zërave në taktin $1"],
   [/^Wide hand stretch in bar (\d+)$/, "Shtrirje e gjerë e dorës në taktin $1"],
   [/^Dynamics marked$/, "Dinamika e shënuar"],
+  [/^Notes stay on the staff$/, "Notat qëndrojnë në pentagram"],
+  [/^Notes beyond the staff: (.+)$/, "Nota jashtë pentagramit: $1"],
   [/^No starting dynamic: (.+)$/, "Pa dinamikë në fillim: $1"],
   [/^Final fermata$/, "Koronë në fund"],
   [/^No fermata on the final chord$/, "Pa koronë në akordin e fundit"],

@@ -50,7 +50,7 @@ export function checkAbcWith(abcjs: any, abc: string): CheckResult {
   const names = voiceNames(abc);
   const voices: {
     bars: number[]; acc: number; pitches: { p: number; bar: number }[];
-    t: number; events: NoteEvent[]; speller: ReturnType<typeof makeSpeller> | null;
+    t: number; events: NoteEvent[]; speller: ReturnType<typeof makeSpeller> | null; clef: string;
   }[] = [];
 
   for (const line of tune.lines) {
@@ -58,7 +58,7 @@ export function checkAbcWith(abcjs: any, abc: string): CheckResult {
     let idx = 0;
     for (const st of line.staff) {
       for (const voice of st.voices ?? []) {
-        const rec = (voices[idx] ??= { bars: [], acc: 0, pitches: [], t: 0, events: [], speller: null });
+        const rec = (voices[idx] ??= { bars: [], acc: 0, pitches: [], t: 0, events: [], speller: null, clef: String(st.clef?.type ?? "treble") });
         rec.speller ??= makeSpeller(keyAccidentals(st.key?.accidentals));
         let mult = 1;
         for (const el of voice) {
@@ -121,6 +121,32 @@ export function checkAbcWith(abcjs: any, abc: string): CheckResult {
     problems.push(`Range problems: ${rangeIssues.join("; ")}.`);
     checks.push({ ok: false, label: rangeIssues[0] ?? "Range issue" });
   } else checks.push({ ok: true, label: "Ranges checked" });
+
+  // Staff: every part stays within one ledger line of its staff (Drin's rule for readable parts).
+  const STAFF: Record<string, [number, number, string]> = {
+    treble: [0, 13, "C4–B5"], bass: [-12, 1, "E2–D4"], alto: [-6, 7, "D3–C5"], tenor: [-8, 5, "B2–A4"],
+  };
+  const LET = "CDEFGAB";
+  const nameOf = (p: number) => `${LET[((p % 7) + 7) % 7]}${Math.floor(p / 7) + 4}`;
+  const offStaff: string[] = [];
+  const offNames: string[] = [];
+  voices.forEach((v, i) => {
+    const base = STAFF[v.clef.replace(/[+-]8$/, "")];
+    if (!base) return;
+    // piano hands may use two ledger lines; every other part one
+    const wide = /piano|pian|\b(rh|lh)\b|keys|harp/i.test(names[i] ?? "") ? 2 : 0;
+    const lim: [number, number, string] = [base[0] - wide, base[1] + wide, wide ? `${base[2]}, two ledger lines for piano` : base[2]];
+    const out = v.pitches.filter((x) => x.p < lim[0] || x.p > lim[1]);
+    if (!out.length) return;
+    const worst = out.reduce((a, b) => (Math.abs(b.p - (b.p > lim[1] ? lim[1] : lim[0])) > Math.abs(a.p - (a.p > lim[1] ? lim[1] : lim[0])) ? b : a));
+    const name = names[i] ?? `Voice ${i + 1}`;
+    offNames.push(name);
+    offStaff.push(`${name} goes beyond the staff in ${out.length} place${out.length > 1 ? "s" : ""}, worst in bar ${worst.bar} (${nameOf(worst.p)}); keep it within one ledger line (${v.clef} clef ${lim[2]}) by changing octave, clef or giving the passage to another part`);
+  });
+  if (offStaff.length) {
+    problems.push(`Ledger lines: ${offStaff.join("; ")}.`);
+    checks.push({ ok: false, label: `Notes beyond the staff: ${offNames.slice(0, 3).join(", ")}` });
+  } else if (voices.length) checks.push({ ok: true, label: "Notes stay on the staff" });
 
   // Voice leading: parallels, crossing, spacing, piano stretches.
   if (voices.length >= 1) {

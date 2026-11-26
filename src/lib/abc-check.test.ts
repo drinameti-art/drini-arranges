@@ -21,4 +21,14 @@ describe("checkAbc", () => {
     const r = await checkAbc(v);
     expect(r.problems.join(" ")).toMatch(/Violin goes outside G3–A6/);
   });
+  it("flags a violin line floating above the staff", async () => {
+    const v = `X:1\nM:4/4\nL:1/4\nK:C\nV:1 clef=treble name="Violin 1"\n[V:1] c' d' e' f' | g'4 |]\n`;
+    const r = await checkAbc(v);
+    expect(r.problems.join(" ")).toMatch(/Violin 1 goes beyond the staff/);
+  });
+  it("lets piano use two ledger lines", async () => {
+    const v = `X:1\nM:4/4\nL:1/4\nK:C\nV:1 clef=treble name="Piano RH"\n[V:1] a b c' d' | c'4 |]\n`;
+    const r = await checkAbc(v);
+    expect(r.problems.join(" ")).not.toMatch(/beyond the staff/);
+  });
 });
