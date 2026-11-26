@@ -90,7 +90,7 @@ export function abcToMusicXml(abcjs: any, abc: string, title: string): string {
     '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">',
     '<score-partwise version="3.1">',
     `<work><work-title>${esc(title)}</work-title></work>`,
-    '<identification><creator type="arranger">Drini (DriniArranges)</creator><encoding><software>DriniArranges</software></encoding></identification>',
+    '<identification><creator type="arranger">Drini (DriniArranges)</creator><rights>© DriniArranges</rights><encoding><software>DriniArranges</software></encoding></identification>',
     "<part-list>",
     ...parts.map((p, i) => `<score-part id="P${i + 1}"><part-name>${esc(p.name)}</part-name></score-part>`),
     "</part-list>",

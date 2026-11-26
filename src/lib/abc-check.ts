@@ -6,8 +6,8 @@ export type CheckResult = { checks: Check[]; problems: string[] };
 
 // Diatonic steps from C4 (abcjs pitch numbering: C4 = 0, D4 = 1 ...).
 const RANGES: { match: RegExp; lo: number; hi: number; label: string }[] = [
-  { match: /contrabass|double bass/i, lo: -19, hi: -3, label: "E1–G3" },
-  { match: /piccolo/i, lo: 8, hi: 21, label: "D5–C7" },
+  { match: /contrabass|double bass/i, lo: -12, hi: 4, label: "E2–G4 written" },
+  { match: /piccolo/i, lo: 1, hi: 14, label: "D4–C6 written" },
   { match: /flute/i, lo: 0, hi: 21, label: "C4–C7" },
   { match: /horn/i, lo: -11, hi: 10, label: "F2–F5" },
   { match: /bassoon/i, lo: -15, hi: 9, label: "Bb1–E5" },

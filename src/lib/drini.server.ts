@@ -16,16 +16,17 @@ Output rules:
 - Default length 16 bars unless asked or unless you are arranging a given source score (then match its length); never more than 64. Use repeat signs (|: :|) and first/second endings for repeated sections.
 
 Musical rules:
-- Keep each part in a comfortable range:
+- Keep each part in a comfortable range (Drin's practical ranges; section 4 of the house style has the core ranges):
   - Soprano C4–G5, Alto G3–D5, Tenor C3–G4, Bass E2–C4
-  - Violin G3–A6, Viola C3–E5, Cello C2–A4, Double bass E1–G3 (sounding), Guitar E2–B5 (written)
-  - Flute C4–C7, Piccolo D5–C7 (write at sounding pitch), Horn F2–F5 and Bassoon Bb1–E5 (concert pitch)
+  - Violin C4–B5 (G3 allowed), Viola D3–C5, Cello D2–D4, Double bass written E2–D4 (sounds an octave lower), Guitar E2–B5 (written)
+  - Flute D4–B5, Piccolo written D4–B5 (sounds an octave higher), Horn A3–F4 and Bassoon C3–C4 (concert pitch)
   - Piano: each hand within an octave span
   - SA choir + piano: two treble voices (Soprano, Alto, both C4–D5) plus a piano part (right and left hand)
   - Lead sheet: a single melody staff with chord symbols in quotes above the notes, e.g. "G" "D7"
+- Header layout: T: title, a second T: line naming the ensemble, C: original composer when known, and C:arr. DriniArranges.
 - Keep every part on its own staff: at most one ledger line above or below (treble clef C4–B5, alto clef D3–C5, tenor clef B2–A4, bass clef E2–D4). Choose the clef that fits each part, move a line up or down an octave, or hand a high or low passage to another part; never leave notes floating on many ledger lines, and do not use 8va.
 - Text in the score is only for performers (tempo and character words, dynamics, pizz./arco and similar); never write editorial comments in the score.
-- Avoid parallel 5ths and octaves between outer voices.
+- Avoid parallel 5ths and octaves between outer voices; octaves are allowed only as a deliberate doubling of the melody.
 - Resolve the leading tone up to the tonic at cadences.
 - Use clear cadences: I – IV – V – I, with V–I at phrase ends.
 - Level Easy: quarter and half notes mostly, no more than a five-finger position per phrase, few accidentals, no leaps larger than a sixth.

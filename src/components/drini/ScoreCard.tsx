@@ -3,7 +3,7 @@ import { ArrowUpDown, ChevronDown, Download, Pause, Play, Check, AlertTriangle }
 import { toast } from "sonner";
 import type { Check as CheckItem } from "@/lib/abc-check";
 import { ScoreSheet, type ScoreSheetHandle } from "./ScoreSheet";
-import { downloadAbc, downloadMidi, downloadMusicXml, fileSlug, printScore } from "@/lib/abc-tools";
+import { COPYRIGHT, downloadAbc, downloadMidi, downloadMusicXml, fileSlug, printScore } from "@/lib/abc-tools";
 import { checkLabel, keyName, useLang } from "@/lib/i18n";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -117,6 +117,7 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
       <div className="score-scroll mt-5 overflow-x-auto rounded-2xl border border-border bg-paper px-2 py-3">
         <div className="min-w-[680px]">
           <ScoreSheet ref={sheet} abc={score.abc} highlights={highlights} onEnded={() => { setPlaying(false); setStarted(false); }} />
+          <p className="mt-2 pb-1 text-center font-sans text-[11px] tracking-wide text-graphite">{COPYRIGHT}</p>
         </div>
       </div>
 

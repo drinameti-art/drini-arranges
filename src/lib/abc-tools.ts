@@ -43,8 +43,13 @@ export async function downloadMusicXml(abc: string, title: string, fileBase: str
   download(new Blob([xml], { type: "application/vnd.recordare.musicxml+xml" }), `${fileBase}.musicxml`);
 }
 
+/** The copyright line printed at the bottom of every generated piece. */
+export const COPYRIGHT = "© DriniArranges";
+
 export function downloadAbc(abc: string, fileBase: string) {
-  download(new Blob([abc], { type: "text/vnd.abc;charset=utf-8" }), `${fileBase}.abc`);
+  // %%footer puts the label at the bottom of every page in ABC tools that print pages (abcm2ps and similar)
+  const withFooter = /^%%footer/m.test(abc) ? abc : abc.replace(/^(X:.*)$/m, `$1\n%%footer \t${COPYRIGHT}\t`);
+  download(new Blob([withFooter], { type: "text/vnd.abc;charset=utf-8" }), `${fileBase}.abc`);
 }
 
 function download(blob: Blob, name: string) {
@@ -79,8 +84,9 @@ export async function printScore(title: string, meta: string, abc: string) {
   if (!w) { window.print(); return; }
   const esc = (x: string) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
-<style>@page{margin:14mm}body{font-family:Georgia,serif;color:#17162B;margin:0}h1{font-size:20px;margin:0 0 2px}p{font:12px Inter,Arial,sans-serif;color:#5C5868;margin:0 0 8px}svg{display:block;max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}</style>
-</head><body><h1>${esc(title)}</h1><p>${esc(meta)}</p>${svgs.join("")}</body></html>`);
+<style>@page{margin:14mm 14mm 18mm}body{font-family:Georgia,serif;color:#17162B;margin:0;padding-bottom:10mm}h1{font-size:20px;margin:0 0 2px}p{font:12px Inter,Arial,sans-serif;color:#5C5868;margin:0 0 8px}svg{display:block;max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}
+.copy{position:fixed;left:0;right:0;bottom:0;text-align:center;font:10px Inter,Arial,sans-serif;letter-spacing:.04em;color:#5C5868}</style>
+</head><body><h1>${esc(title)}</h1><p>${esc(meta)}</p>${svgs.join("")}<div class="copy">${esc(COPYRIGHT)}</div></body></html>`);
   w.document.close();
   w.focus();
   setTimeout(() => { w.print(); }, 400);
@@ -107,6 +113,9 @@ export function withInstruments(abc: string): string {
     const name = /(?:name|nm)="([^"]+)"/.exec(m[2] ?? "")?.[1] ?? "";
     const prog = PROGRAMS.find(([re]) => re.test(name))?.[1];
     if (prog !== undefined) out.push(`%%MIDI program ${prog}`); // directly after the voice's first V: line
+    // parts written at a different octave from the sound
+    if (/piccolo/i.test(name)) out.push("%%MIDI transpose 12");
+    else if (/contrabass|double bass|kontrabas/i.test(name)) out.push("%%MIDI transpose -12");
   }
   return out.join("\n");
 }
