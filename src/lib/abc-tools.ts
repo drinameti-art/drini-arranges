@@ -74,7 +74,7 @@ export async function printScore(title: string, meta: string, abc: string) {
   const box = document.createElement("div");
   box.style.cssText = "position:fixed;left:-10000px;top:0;width:800px";
   document.body.appendChild(box);
-  lib.renderAbc(box, abc, { oneSvgPerLine: true, staffwidth: 720, paddingtop: 8, paddingbottom: 8, foregroundColor: "#17162B" });
+  lib.renderAbc(box, oneLabelPerInstrument(abc), { oneSvgPerLine: true, staffwidth: 720, paddingtop: 8, paddingbottom: 8, foregroundColor: "#17162B" });
   const svgs = Array.from(box.querySelectorAll("svg")).map((svg) => {
     svg.removeAttribute("style");
     svg.setAttribute("width", "100%");
@@ -99,6 +99,27 @@ const PROGRAMS: [RegExp, number][] = [
   [/soprano|alto|tenor|baritone|choir|kor|^bass$|^bass\b/i, 52],
   [/guitar|kitar/i, 24], [/harp/i, 46],
 ];
+
+/**
+ * Display only: a piano (or other two-hand instrument) is labelled once, on the right-hand staff,
+ * the way it is in Drin's scores — not "Piano RH" and "Piano LH" on both staves.
+ * The stored ABC keeps RH/LH names because checks and playback rely on them.
+ */
+export function oneLabelPerInstrument(abc: string): string {
+  const HAND = /^(.*?)[\s-]*(?:\b(?:RH|LH)\b|right hand|left hand|dora e djathtë|dora e majtë)$/i;
+  const done = new Set<string>();
+  return abc.replace(/^(V:\s*\S+)(.*)$/gm, (line, head: string, rest: string) => {
+    const name = /\b(?:name|nm)="([^"]*)"/.exec(rest)?.[1];
+    const m = name ? HAND.exec(name.trim()) : null;
+    if (!m) return line;
+    const inst = (m[1] ?? "").trim() || "Piano";
+    const clean = rest.replace(/\s*\b(?:name|nm|subname|snm)="[^"]*"/g, "");
+    if (done.has(inst)) return head + clean; // second hand: no label
+    done.add(inst);
+    const short = /piano/i.test(inst) ? "Pno." : inst;
+    return `${head}${clean} name="${inst}" snm="${short}"`;
+  });
+}
 
 /** Adds a MIDI instrument per voice so playback sounds like the ensemble (violins, cello, flute…) instead of piano. */
 export function withInstruments(abc: string): string {

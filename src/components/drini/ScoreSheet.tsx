@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
-import { withInstruments } from "@/lib/abc-tools";
+import { oneLabelPerInstrument, withInstruments } from "@/lib/abc-tools";
 
 export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
 
@@ -27,7 +27,7 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
     ready.current = import("abcjs").then((mod) => {
       const abcjs = mod.default ?? mod;
       if (cancelled || !el.current) return;
-      const [visual] = abcjs.renderAbc(el.current, withInstruments(abc), {
+      const [visual] = abcjs.renderAbc(el.current, oneLabelPerInstrument(withInstruments(abc)), {
         responsive: "resize",
         add_classes: true,
         staffwidth: 760,
