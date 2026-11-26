@@ -19,8 +19,8 @@ export const Route = createFileRoute("/pricing")({
 
 const tiers = [
   { name: "pr.free", blurb: "pr.freeBlurb", price: "€0", features: ["pr.f.free1", "pr.f.free2", "pr.f.free3", "pr.f.free4"], cta: "pr.current", featured: false },
-  { name: "pr.pro", blurb: "pr.proBlurb", price: "€9", features: ["pr.f.pro1", "pr.f.pro2", "pr.f.pro3", "pr.f.pro4"], cta: "pr.soon", featured: true },
-  { name: "pr.studio", blurb: "pr.studioBlurb", price: "€19", features: ["pr.f.st1", "pr.f.st2", "pr.f.st3", "pr.f.st4"], cta: "pr.soon", featured: false },
+  { name: "pr.pro", blurb: "pr.proBlurb", price: "€29.99", features: ["pr.f.pro1", "pr.f.pro2", "pr.f.pro3", "pr.f.pro4"], cta: "pr.soon", featured: true },
+  { name: "pr.studio", blurb: "pr.studioBlurb", price: "€59.99", features: ["pr.f.st1", "pr.f.st2", "pr.f.st3", "pr.f.st4"], cta: "pr.soon", featured: false },
 ] as const;
 
 function Pricing() {

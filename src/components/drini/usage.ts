@@ -1,7 +1,7 @@
 // Free-plan counter, kept in this browser until accounts exist (easy to reset, so it's a guide, not a lock).
 import { useEffect, useState } from "react";
 
-export const FREE_PER_MONTH = 5;
+export const FREE_PER_MONTH = 3;
 const KEY = "drini:usage";
 const EVENT = "drini:usage";
 const month = () => new Date().toISOString().slice(0, 7);
