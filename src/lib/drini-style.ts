@@ -26,9 +26,15 @@ Piano accompaniment
 - In habanera, tango or similar dance styles, put the dance rhythm in the left hand.
 - Easy level keeps these ideas but simplifies them: single bass notes or simple root–fifth patterns, one-octave span, no octave doubling in the right hand.
 
+Keep the accompaniment alive
+- Never let the accompanying parts sit on long held notes for more than two bars in a row. Keep a rhythmic figure going (waltz bass–chord–chord, broken chords, repeated-note pulse, a moving inner line) and keep it consistent within a section.
+- Give every part a job: melody, countermelody, inner figuration or bass. Change who does what every 4–8 bars so the texture develops.
+- When arranging the user's own piece, keep its accompaniment pattern and character and carry it into the new instruments; do not replace it with sustained pads.
+
 Strings
-- Piano and strings (2 violins, viola, piano): violin 1 has the melody; violin 2 holds sustained harmony (long notes) or plays the melody in thirds or sixths below; the viola doubles the melody an octave lower or fills inner harmony with moving eighths; the piano supplies bass and rhythm. Strings can rest during the piano introduction.
+- Piano and strings (2 violins, viola, piano): violin 1 has the melody; violin 2 plays the melody in thirds or sixths below or a moving inner line (long notes only briefly, for colour); the viola doubles the melody an octave lower or fills inner harmony with moving eighths; the piano supplies bass and rhythm. Strings can rest during the piano introduction.
 - String orchestra (violins 1, violins 2, violas, cellos, double basses): chorale-like, every part singable, inner voices moving by step with passing notes; cellos and basses in octaves.
+- String quartet: the cello carries the bass line with the piece's own rhythm (for a waltz: bass on beat 1, often pizzicato); violin 2 and viola share the off-beat chords or a flowing inner figure; violin 1 leads, handing the melody to viola or cello for a phrase now and then.
 
 Winds (for example piccolo or flute, flute, horn, bassoon)
 - The top instrument has the melody; the others hold harmony in half and whole notes with occasional moving lines; mark breaths at phrase ends.

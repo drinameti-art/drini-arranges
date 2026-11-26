@@ -61,3 +61,24 @@ function download(blob: Blob, name: string) {
 export function fileSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "drini-score";
 }
+
+/** Print just the score in its own window: clean pages, no app chrome, no highlight boxes. */
+export function printScore(title: string, meta: string, root: HTMLElement | null) {
+  const svgs = Array.from(root?.querySelectorAll("svg") ?? []).map((svg) => {
+    const copy = svg.cloneNode(true) as SVGSVGElement;
+    copy.querySelectorAll(".drini-hl").forEach((n) => n.remove());
+    copy.querySelectorAll(".abcjs-playing, .abcjs-note_selected").forEach((n) => n.classList.remove("abcjs-playing", "abcjs-note_selected"));
+    copy.removeAttribute("style");
+    copy.setAttribute("width", "100%");
+    return copy.outerHTML;
+  });
+  const w = window.open("", "_blank");
+  if (!w) { window.print(); return; }
+  const esc = (x: string) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>@page{margin:14mm}body{font-family:Georgia,serif;color:#17162B;margin:0}h1{font-size:20px;margin:0 0 2px}p{font:12px Inter,Arial,sans-serif;color:#5C5868;margin:0 0 10px}svg{display:block;max-width:100%;height:auto}</style>
+</head><body><h1>${esc(title)}</h1><p>${esc(meta)}</p>${svgs.join("")}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => { w.print(); }, 300);
+}

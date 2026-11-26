@@ -50,7 +50,9 @@ export const arrange = createServerFn({ method: "POST" })
           `Write a new arrangement.\nDescription: ${data.description || "(none: arrange the source score below)"}\nEnsemble: ${data.ensemble}\nLevel: ${data.level}\nKey: ${data.key}\nStyle: ${data.style}` +
           (data.source
             ? `\n\nSOURCE SCORE, imported from the user's file (ABC; rhythms rounded to sixteenths, so tidy obvious slips). ` +
-              `Keep its melody and harmony recognisable and arrange it for the requested ensemble, level and key ("Keep original" means its own key):\n${data.source}`
+              `This is the user's own music: arrange ALL of it, bar for bar, with the same number of bars, form, repeats, melody (same notes and rhythms) and harmony. ` +
+              `Do not shorten, condense or recompose it, and ignore the default length. Redistribute it for the requested ensemble, level and key ("Keep original" means its own key), ` +
+              `keeping the character of its accompaniment (for example a waltz bass–chord–chord stays a waltz):\n${data.source}`
             : "") +
           langNote(data.lang),
       },
@@ -71,7 +73,7 @@ export const arrangeFromFile = createServerFn({ method: "POST" })
             text:
               `The attached ${data.mediaType === "application/pdf" ? "PDF" : "photo"} ("${data.fileName}") is sheet music the user wants arranged. ` +
               `First read it carefully: title, key, time signature, the melody, and the harmony or bass if shown (use at most the first 64 bars). ` +
-              `Then write a new arrangement of it.\nDescription: ${data.description || "(none)"}\nEnsemble: ${data.ensemble}\nLevel: ${data.level}\nKey: ${data.key} ("Keep original" means the key on the page)\nStyle: ${data.style}\n` +
+              `Then arrange ALL of it bar for bar (same length, form, melody and harmony, up to 64 bars); do not shorten, condense or recompose it.\nDescription: ${data.description || "(none)"}\nEnsemble: ${data.ensemble}\nLevel: ${data.level}\nKey: ${data.key} ("Keep original" means the key on the page)\nStyle: ${data.style}\n` +
               `If parts of the page are unreadable, arrange what you can read and say so in "summary". If it is not sheet music, explain that in "summary" and return a short placeholder score.` +
               langNote(data.lang),
           },

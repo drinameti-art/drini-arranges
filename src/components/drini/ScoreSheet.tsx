@@ -87,8 +87,10 @@ function drawHighlight(root: HTMLElement, bar: number, label: string) {
   if (!svg || bar < 1) return;
   const idx = bar - 1;
   // abcjs numbers measures from 0: "abcjs-mm{n}" counts through the whole tune, "abcjs-m{n}" restarts on each line.
-  let els = Array.from(svg.querySelectorAll<SVGGraphicsElement>(`.abcjs-mm${idx}`));
-  if (!els.length) els = Array.from(svg.querySelectorAll<SVGGraphicsElement>(`.abcjs-m${idx}`));
+  // only notes and rests: staff lines and text can carry measure classes too and would stretch the box over the whole system
+  const pick = (cls: string) => Array.from(svg.querySelectorAll<SVGGraphicsElement>(`.abcjs-note.${cls}, .abcjs-rest.${cls}`));
+  let els = pick(`abcjs-mm${idx}`);
+  if (!els.length) els = pick(`abcjs-m${idx}`);
   if (!els.length) return;
   // If the bar sits on a later line, only box the elements on the first line it appears on.
   const lineOf = (e: Element) => /abcjs-l(\d+)/.exec(e.getAttribute("class") ?? "")?.[1];
@@ -104,9 +106,11 @@ function drawHighlight(root: HTMLElement, bar: number, label: string) {
   if (!Number.isFinite(x1)) return;
   const ns = "http://www.w3.org/2000/svg";
   const rect = document.createElementNS(ns, "rect");
+  rect.setAttribute("class", "drini-hl");
   Object.entries({ x: x1 - 10, y: y1 - 10, width: x2 - x1 + 20, height: y2 - y1 + 20, rx: 8, fill: "#7B1F3A", "fill-opacity": "0.08", stroke: "#7B1F3A", "stroke-opacity": "0.25" })
     .forEach(([k, v]) => rect.setAttribute(k, String(v)));
   const text = document.createElementNS(ns, "text");
+  text.setAttribute("class", "drini-hl");
   Object.entries({ x: x1 - 8, y: y1 - 16, fill: "#7B1F3A", "font-size": "11", "font-family": "Inter, sans-serif", "font-weight": "600" })
     .forEach(([k, v]) => text.setAttribute(k, String(v)));
   text.textContent = label;

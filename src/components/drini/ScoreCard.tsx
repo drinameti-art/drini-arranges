@@ -3,7 +3,7 @@ import { ArrowUpDown, ChevronDown, Download, Pause, Play, Check, AlertTriangle }
 import { toast } from "sonner";
 import type { Check as CheckItem } from "@/lib/abc-check";
 import { ScoreSheet, type ScoreSheetHandle } from "./ScoreSheet";
-import { downloadAbc, downloadMidi, downloadMusicXml, fileSlug } from "@/lib/abc-tools";
+import { downloadAbc, downloadMidi, downloadMusicXml, fileSlug, printScore } from "@/lib/abc-tools";
 import { checkLabel, keyName, useLang } from "@/lib/i18n";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -64,6 +64,10 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
     }
   };
 
+  const sheetBox = useRef<HTMLDivElement>(null);
+  const metaLine = [t("score.by"), keyName(score.key, lang), score.meter, t("score.bars", { n: score.bars })].filter(Boolean).join(" · ");
+  const print = () => printScore(score.title, metaLine, sheetBox.current);
+
   const highlights = score.notes.map((n) => ({ bar: n.bar, label: t("score.note", { n: n.bar }) }));
 
   return (
@@ -102,7 +106,7 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
               <button className="btn btn-ghost"><Download className="h-4 w-4" />{t("score.download")}<ChevronDown className="h-3.5 w-3.5 opacity-60" /></button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onSelect={() => window.print()}>{t("dl.pdf")}</DropdownMenuItem>
+              <DropdownMenuItem onSelect={print}>{t("dl.pdf")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => void musicXml()}>{t("dl.xml")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => void midi()}>{t("dl.midi")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => downloadAbc(score.abc, fileSlug(score.title))}>{t("dl.abc")}</DropdownMenuItem>
@@ -112,7 +116,7 @@ export function ScoreCard({ score, checks, draft, refreshing, onTranspose }: Pro
       </div>
 
       <div className="score-scroll mt-5 overflow-x-auto rounded-2xl border border-border bg-paper px-2 py-3">
-        <div className="min-w-[680px]">
+        <div className="min-w-[680px]" ref={sheetBox}>
           <ScoreSheet ref={sheet} abc={score.abc} highlights={highlights} onEnded={() => { setPlaying(false); setStarted(false); }} />
         </div>
       </div>
