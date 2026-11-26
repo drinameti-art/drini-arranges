@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
-import { oneLabelPerInstrument, withInstruments } from "@/lib/abc-tools";
+import { oneLabelPerInstrument, playbackOptions, withInstruments } from "@/lib/abc-tools";
 
 export type ScoreSheetHandle = { play: () => Promise<void>; pause: () => void; resume: () => void; stop: () => void };
 
@@ -66,8 +66,18 @@ export const ScoreSheet = forwardRef<ScoreSheetHandle, Props>(function ScoreShee
         },
       });
       const synth = new abcjs.synth.CreateSynth();
-      await synth.init({ visualObj: visual, audioContext, millisecondsPerMeasure: visual.millisecondsPerMeasure() });
-      await synth.prime();
+      const base = { visualObj: visual, audioContext, millisecondsPerMeasure: visual.millisecondsPerMeasure() };
+      const options = playbackOptions(abcNow.current);
+      try {
+        await synth.init({ ...base, options });
+        await synth.prime();
+      } catch {
+        // the better samples could not be loaded (offline, blocked): fall back to abcjs's built-in set
+        const { soundFontUrl: _unused, ...rest } = options;
+        void _unused;
+        await synth.init({ ...base, options: rest });
+        await synth.prime();
+      }
       state.current.synth = synth;
       state.current.timer = timer;
       activeStop = () => { synth.stop(); timer.stop(); clear(); onEnded?.(); };

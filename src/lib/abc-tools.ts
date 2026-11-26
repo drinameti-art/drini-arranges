@@ -29,7 +29,7 @@ export async function transposeAbc(abc: string, semitones: number): Promise<stri
 export async function downloadMidi(abc: string, fileBase: string) {
   const lib = await abcjs();
   const [visual] = lib.renderAbc("*", abc);
-  const files: unknown = lib.synth.getMidiFile(lib.renderAbc("*", withInstruments(abc))[0], { midiOutputType: "binary" });
+  const files: unknown = lib.synth.getMidiFile(lib.renderAbc("*", withInstruments(abc))[0], { midiOutputType: "binary", chordsOff: playbackOptions(abc).chordsOff });
   const data = Array.isArray(files) ? files[0] : files;
   if (!data) throw new Error("midi failed");
   download(new Blob([data as BlobPart], { type: "audio/midi" }), `${fileBase}.mid`);
@@ -92,13 +92,50 @@ export async function printScore(title: string, meta: string, abc: string) {
   setTimeout(() => { w.print(); }, 400);
 }
 
+// General MIDI programs per instrument. Sections (plural names: "Violins 1", "Violas") use the string ensemble
+// sound, solo parts (string quartet, piano and strings) the solo instrument.
 const PROGRAMS: [RegExp, number][] = [
-  [/piccolo/i, 72], [/flute|flaut/i, 73], [/oboe/i, 68], [/clarinet/i, 71], [/bassoon|fagot/i, 70], [/horn/i, 60],
-  [/trumpet/i, 56], [/trombone/i, 57], [/tuba/i, 58], [/sax/i, 65],
-  [/contrabass|double bass|kontrabas/i, 43], [/cello|violonçel/i, 42], [/viola|violë/i, 41], [/violin|violinë/i, 40],
-  [/soprano|alto|tenor|baritone|choir|kor|^bass$|^bass\b/i, 52],
-  [/guitar|kitar/i, 24], [/harp/i, 46],
+  [/piccolo/i, 72], [/flute|flaut/i, 73], [/oboe/i, 68], [/english horn|cor anglais/i, 69], [/clarinet|klarinet/i, 71],
+  [/bassoon|fagot/i, 70], [/horn|korno/i, 60], [/trumpet|trumbet/i, 56], [/trombone|trombon/i, 57], [/tuba/i, 58],
+  [/sax/i, 65], [/recorder|fyell/i, 74],
+  [/contrabass|double bass|kontrabas/i, 43],
+  [/violins|violas|cellos|violoncellos|strings|harqe/i, 48],
+  [/cello|violonçel/i, 42], [/viola|violë/i, 41], [/violin|violinë/i, 40],
+  [/soprano|alto|tenor|baritone|choir|kor|^bass$|^bass\b|voice|zë/i, 52],
+  [/guitar|kitar/i, 24], [/harp|harpë/i, 46], [/organ|organo/i, 19], [/accordion|fizarmonik/i, 21],
+  [/piano|pno|keys|\b(rh|lh)\b|primo|secondo|player/i, 0],
 ];
+
+/** Higher-quality samples than abcjs's default set (Musyng Kite, same format, hosted with the abcjs sound fonts). */
+export const SOUND_FONT_URL = "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/";
+
+/** Where each part sits left to right, like players on a stage (-1 left … 1 right). */
+const SEATING: [RegExp, number][] = [
+  [/violins? ?1|violin i\b|first violin|primo/i, -0.55], [/violins? ?2|violin ii\b|second violin/i, -0.25],
+  [/viola|violë/i, 0.2], [/cello|violonçel/i, 0.4], [/contrabass|double bass|kontrabas/i, 0.6],
+  [/piccolo|flute ?1|flaut/i, -0.3], [/flute ?2|oboe/i, 0.1], [/clarinet/i, -0.15], [/bassoon|fagot/i, 0.25], [/horn/i, 0.45],
+  [/soprano/i, -0.45], [/alto/i, -0.15], [/tenor/i, 0.15], [/bass/i, 0.45],
+  [/piano|pno|\b(rh|lh)\b|secondo|player/i, 0],
+];
+
+/** Synth options for the score: better samples, stereo seating, and no extra chord-symbol accompaniment in ensembles. */
+export function playbackOptions(abc: string): { soundFontUrl: string; pan: number[]; chordsOff: boolean } {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const m of abc.matchAll(/^V:\s*(\S+)([^\n]*)$/gm)) {
+    if (seen.has(m[1]!)) continue;
+    seen.add(m[1]!);
+    names.push(/(?:name|nm)="([^"]+)"/.exec(m[2] ?? "")?.[1] ?? m[1]!);
+  }
+  const n = names.length;
+  const pan = names.map((name, i) => {
+    const seat = SEATING.find(([re]) => re.test(name))?.[1];
+    if (seat !== undefined) return seat;
+    return n > 1 ? Math.round((-0.5 + i / (n - 1)) * 100) / 100 : 0; // spread unknown parts evenly
+  });
+  // chord symbols ("Am", "G7") are for reading; abcjs would otherwise add a chord track on top of the written parts
+  return { soundFontUrl: SOUND_FONT_URL, pan, chordsOff: n > 1 };
+}
 
 /**
  * Display only: a piano (or other two-hand instrument) is labelled once, on the right-hand staff,
