@@ -5,7 +5,7 @@
 // Albanian songs (Albulena, I Dehur Jam), a beginner piece (Bink's Sake for a student),
 // Comptine d'un autre été (piano 4 hands), Eksperienca (flute and piano), two jazz sketches,
 // his own piano pieces (Waves etude, Time miniature, a loop piece in C minor, a waltz-like poem)
-// and a two-flutes-and-piano sketch.
+// and a two-flutes-and-piano sketch; and Himni i Flamurit for string orchestra.
 // Every number below comes from analysing those eight scores note by note
 // (harmony per beat, voice motion on an eighth-note grid, ranges, roles per bar, markings).
 // Short excerpts are only from traditional / public-domain melodies or Drin's own music.
@@ -48,7 +48,8 @@ export const DRINI_STYLE = `HOUSE STYLE: write like Drin Ameti (DriniArranges). 
 
 5. TEXTURE AND ROLES BY ENSEMBLE (measured share of bars)
 - Two violins, viola and piano (Carol, Habanera, Schindler): violin 1 has the melody 45–85% of the time. Violin 2 plays the melody in thirds or sixths (15–22%), a countermelody (14–20%), a repeated-note or off-beat pulse (4–27%) or short sustained harmony. The viola doubles the melody an octave lower (18–26%; with violin 1 an octave apart 43–63% in tutti sections), plays a countermelody (11–27%) or the inner pulse. The piano left hand is the bass line almost all the time (97%). The piano right hand doubles the melody (11–45%), plays block chords (15–30%) or broken-chord figuration under the strings (59% in Schindler). The strings rest during the piano introduction.
-- String orchestra (Himni, Tumankuqja): violins 1 melody 100%. Violins 2 and violas mix sustained harmony (40–76%) with moving lines and short parallel-third passages. Cellos alternate between countermelody (35–44%) and harmony. Basses play the bass line, always the cello line an octave lower. Chorale texture, every part singable, all parts mostly in the same rhythm (58–88%).
+- String orchestra (Himni i Kosovës, Himni i Flamurit, Tumankuqja): violins 1 melody 95–100%. Violins 2 and violas mix sustained harmony (40–76%) with moving lines and short parallel-third passages. Cellos alternate between countermelody (35–44%) and harmony. Basses play the bass line, always the cello line an octave lower. Chorale texture, every part singable, all parts mostly in the same rhythm (50–88%).
+- Anthems and hymns for strings (Himni i Kosovës, Himni i Flamurit): about 2.5 chords per bar, mostly triads with light sevenths (16–35%), secondary dominants V/IV and V/V, first inversion about a quarter of the time, a cadential six-four before the last V–I. All parts start together at mp or f. Use repeats with first and second endings for the verses, fermatas on all parts at the held notes of the tune and on the final chord, slurs on every phrase, hairpins on each phrase (Himni i Flamurit has 35) and a dynamic range from pp to f, with rit. before the end. The cellos often have a moving countermelody (47% of bars) while the basses keep the bass line.
 - Flute and piano (The Muse): flute melody, piano right hand doubling it at the unison or octave (66%) or block chords spanning an octave, left hand flowing broken chords. The piano plays the melody alone in the introduction.
 - Wind quartet (Yesterday: piccolo, flute, horn, bassoon): the top instrument has the melody. Flute and horn hold harmony in half and whole notes (about 1/3 of the time) with short moving lines (16–19%). The bassoon is the bass line in half notes. Breath marks at every phrase end.
 - String quartet (no piano): violin 1 leads, sometimes handing a phrase to viola or cello. Violin 2 plays thirds and sixths under violin 1 or off-beat chords with the viola. The cello carries the bass in the piece's own rhythm (waltz: beat 1, often pizzicato).
