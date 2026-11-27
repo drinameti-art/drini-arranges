@@ -14,24 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      arrangement_usage: {
+        Row: {
+          created_at: string
+          id: string
+          score_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          score_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          score_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arrangement_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          plan: string
+          plan_renews_at: string | null
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           email?: string | null
           id: string
+          plan?: string
+          plan_renews_at?: string | null
         }
         Update: {
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
+          plan?: string
+          plan_renews_at?: string | null
         }
         Relationships: []
       }

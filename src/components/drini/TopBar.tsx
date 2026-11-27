@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAccount } from "./auth";
 import { Logo } from "./Logo";
 import { useLang } from "@/lib/i18n";
-import { FREE_PER_MONTH, useFreeLeft } from "./usage";
+import { useFreeLeft } from "./usage";
 
 const nav = [
   { to: "/studio", label: "nav.studio" },
@@ -74,9 +74,10 @@ export function TopBar() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          {left !== null && (
-            <span className="hidden text-sm text-graphite lg:inline" title={t("usage.left", { n: left, max: FREE_PER_MONTH })}>
-              {t("usage.short", { n: left, max: FREE_PER_MONTH })}
+          {user && left && (
+            <span className="hidden text-sm text-graphite lg:inline" title={t("usage.left", { n: left.left, max: left.limit })}>
+              {t("usage.short", { n: left.left, max: left.limit })}
+              {left.plan !== "free" && <> · {t(left.plan === "pro" ? "plan.pro" : "plan.studio")}</>}
             </span>
           )}
           <div className="flex rounded-full bg-beige p-1 text-xs font-semibold" role="group" aria-label="Language / Gjuha">

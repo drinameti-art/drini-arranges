@@ -32,3 +32,5 @@ use the editor.
 - Keep the score library API synchronous; perform cloud synchronization behind account-scoped caches so existing arranging callers remain unchanged.
 - Own session state and the single auth subscriber in a root-mounted provider; keep public pages accessible and enforce score ownership with database RLS.
 - Link saved-score ownership to public profiles, which cascade from auth users, to follow managed schema boundaries.
+- Plan limits are enforced in server functions (src/lib/plan-limits.ts rules, usage.server.ts DB access); usage rows are inserted only with the service role after a successful AI result, so the browser cannot reset or inflate counts.
+- Plan columns on profiles are writable only by the service role (column grant + trigger), ready for a future Paddle webhook.

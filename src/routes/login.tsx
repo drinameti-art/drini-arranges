@@ -9,6 +9,8 @@ import { useLang } from "@/lib/i18n";
 import "@/components/drini/auth-controls.css";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
+    typeof search["redirect"] === "string" ? { redirect: search["redirect"] } : {},
   head: () => ({ meta: [
     { title: "Sign in · DriniArranges" },
     { name: "description", content: "Sign in or create your DriniArranges account to keep your scores in the cloud." },
@@ -28,7 +30,12 @@ function Login() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  useEffect(() => { if (ready && user) void navigate({ to: "/scores", replace: true }); }, [ready, user, navigate]);
+  useEffect(() => {
+    if (!ready || !user) return;
+    let back: string | null = new URLSearchParams(window.location.search).get("redirect");
+    try { back = back ?? sessionStorage.getItem("drini:after-login"); sessionStorage.removeItem("drini:after-login"); } catch { /* ignore */ }
+    void navigate({ to: back === "/studio" ? "/studio" : "/scores", replace: true });
+  }, [ready, user, navigate]);
   const changeMode = (next: typeof mode) => { setMode(next); setMessage(""); };
   async function submit(event: FormEvent) {
     event.preventDefault();

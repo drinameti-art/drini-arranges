@@ -10,13 +10,15 @@ import type { ArrangeRequest } from "./ArrangeForm";
 import { loadEnsemble, loadMelody, type StoredMelody } from "./useMelodyRecorder";
 import { newId, saveScore, type SavedScore } from "./library";
 import { demoFor } from "./demo";
-import { countArrangement, FREE_PER_MONTH, freeLeft, getDemo } from "./usage";
+import { FREE_PER_MONTH, getDemo, refreshUsage } from "./usage";
+import { parseLimitError } from "@/lib/plan-limits";
+import { supabase } from "@/integrations/supabase/client";
 
 type DriniResult = Awaited<ReturnType<typeof arrangeFn>>;
 type Arrangement = Extract<DriniResult, { ok: true }>["arrangement"];
 
 /** A chat message; `key` marks built-in messages that are shown in the current language. */
-export type Msg = { from: "user" | "drini"; text: string; key?: "chat.welcome" };
+export type Msg = { from: "user" | "drini"; text: string; key?: "chat.welcome"; link?: { to: "/pricing" | "/login"; label: string } };
 export type Score = Pick<Arrangement, "title" | "key" | "meter" | "bars" | "abc" | "notes"> & { example?: boolean };
 /** One version of the arrangement on screen, so the user can go back to an earlier draft. */
 export type Draft = { n: number; score: Score; checks: Check[]; label: string };
@@ -68,7 +70,26 @@ export function useDrini() {
   const msgsRef = useRef(msgs);
   msgsRef.current = msgs;
 
-  const say = (text: string) => setMsgs((m) => [...m, { from: "drini", text }]);
+  const say = (text: string, link?: Msg["link"]) => setMsgs((m) => [...m, link ? { from: "drini", text, link } : { from: "drini", text }]);
+
+  /** Signed out and not in demo mode: explain, then go to sign-in (returning to the Studio). */
+  const needSignIn = async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return false;
+    say(tr("usage.signIn", { max: FREE_PER_MONTH }), { to: "/login", label: tr("auth.signIn") });
+    try { sessionStorage.setItem("drini:after-login", "/studio"); } catch { /* ignore */ }
+    setTimeout(() => { window.location.assign("/login?redirect=%2Fstudio"); }, 1200);
+    return true;
+  };
+
+  /** Explain a failed call: the plan limit, or a friendly retry. */
+  const failed = (err: unknown) => {
+    const lim = parseLimitError(err);
+    if (!lim) { say(tr("msg.fail")); return; }
+    const date = new Date(lim.resetsAt).toLocaleDateString(getLang() === "sq" ? "sq-AL" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+    say(tr("usage.limit", { limit: lim.limit, plan: tr(lim.plan === "pro" ? "plan.pro" : lim.plan === "studio" ? "plan.studio" : "plan.free"), date }), { to: "/pricing", label: tr("usage.seePlans") });
+    refreshUsage();
+  };
 
   // Check the sample score once on load so the pills show real results.
   useEffect(() => {
@@ -114,7 +135,7 @@ export function useDrini() {
     }
     if (result.checks[0]?.label === "Score didn't parse") { say(tr("msg.unreadable")); return; }
     show({ title: a.title, key: abcKeyName(a.abc) ?? a.key, meter: a.meter, bars: a.bars, abc: a.abc, notes: a.notes }, meta, result, label, isNew);
-    if (isNew) countArrangement();
+    if (isNew) refreshUsage();
     say(a.summary);
   }, []);
 
@@ -150,7 +171,7 @@ export function useDrini() {
         try { await new Promise((ok) => setTimeout(ok, 700)); await demo(r); } finally { setArranging(false); }
         return;
       }
-      if (freeLeft() <= 0) { say(tr("usage.out", { max: FREE_PER_MONTH })); return; }
+      if (await needSignIn()) return;
       const words = (r.lyrics ?? "").trim();
       const lyricsNote = words
         ? `\n\nLyrics to set under the melody (one syllable per note, hyphens between syllables of a word, in w: lines under the voice that sings them):\n${words.slice(0, 2000)}`
@@ -174,8 +195,8 @@ export function useDrini() {
             ? await arrangeFn({ data: { ...base, source: src.abc.slice(0, 30000) } })
             : await arrangeFileFn({ data: { ...base, data: src.data, mediaType: src.mediaType as "image/jpeg" | "application/pdf", fileName: src.fileName.slice(0, 200) } });
           await apply(res, { id: newId(), ensemble: r.ensemble, level: r.level }, true);
-        } catch {
-          say(tr("msg.uploadFail"));
+        } catch (err) {
+          if (parseLimitError(err)) failed(err); else say(tr("msg.uploadFail"));
         } finally {
           setArranging(false);
         }
@@ -190,8 +211,8 @@ export function useDrini() {
           data: { description: (description + lyricsNote).slice(0, 4000), ensemble: r.ensemble, level: r.level, key: r.key, style: r.style, lang },
         });
         await apply(res, { id: newId(), ensemble: r.ensemble, level: r.level }, true);
-      } catch {
-        say(tr("msg.fail"));
+      } catch (err) {
+        failed(err);
       } finally {
         setArranging(false);
       }
@@ -206,6 +227,7 @@ export function useDrini() {
       const prior = history();
       setMsgs((m) => [...m, { from: "user", text: v }]);
       if (getDemo()) { setTimeout(() => say(tr("demo.revise")), 400); return; }
+      if (await needSignIn()) return;
       setRevising(true);
       try {
         const res = await reviseFn({ data: { abc: score.abc.slice(0, 20000), message: v.slice(0, 4000), history: prior, lang: getLang() } });

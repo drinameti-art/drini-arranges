@@ -15,6 +15,20 @@
       "when": 1795778899775,
       "tag": "0001_restrict_profile_trigger_execution",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795787450477,
+      "tag": "0002_plans_and_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795787569384,
+      "tag": "0003_lock_usage_writes",
+      "breakpoints": true
     }
   ]
 }

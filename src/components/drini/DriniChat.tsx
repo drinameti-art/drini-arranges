@@ -3,6 +3,7 @@ import { ArrowUp } from "lucide-react";
 import { Spark } from "./Logo";
 import type { Draft, Msg } from "./useDrini";
 import { useLang } from "@/lib/i18n";
+import { Link } from "@tanstack/react-router";
 
 type Props = {
   msgs: Msg[]; busy: boolean; onSend: (text: string) => void;
@@ -67,6 +68,9 @@ export function DriniChat({ msgs, busy, onSend, drafts = [], current, onRestore,
           <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
             <p className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.from === "user" ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-ink-soft text-cream"}`}>
               {m.key ? t(m.key) : m.text}
+              {m.link && <> {m.link.to === "/login"
+                ? <Link to="/login" search={{ redirect: "/studio" }} className="font-semibold text-gold underline underline-offset-2">{m.link.label}</Link>
+                : <Link to="/pricing" className="font-semibold text-gold underline underline-offset-2">{m.link.label}</Link>}</>}
             </p>
           </div>
         ))}

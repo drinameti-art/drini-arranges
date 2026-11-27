@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { meterArrangement } from "./plan-limits";
 
 const lang = z.enum(["en", "sq"]).optional();
 
@@ -39,11 +41,25 @@ const reviseInput = z.object({
   lang,
 });
 
+/** Limit check before the AI call; one usage row only after a successful arrangement. */
+async function metered<T extends { ok: boolean }>(ctx: { supabase: Parameters<typeof import("./usage.server").fetchUsage>[0]; userId: string }, run: () => Promise<T>) {
+  const { fetchUsage, recordUsage } = await import("./usage.server");
+  return meterArrangement({ usage: () => fetchUsage(ctx.supabase, ctx.userId), record: () => recordUsage(ctx.userId) }, run);
+}
+
+export const getUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { fetchUsage } = await import("./usage.server");
+    return fetchUsage(context.supabase, context.userId);
+  });
+
 export const arrange = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => arrangeInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { runDrini } = await import("./drini.server");
-    return runDrini([
+    return metered(context, () => runDrini([
       {
         role: "user",
         content:
@@ -56,15 +72,16 @@ export const arrange = createServerFn({ method: "POST" })
             : "") +
           langNote(data.lang),
       },
-    ]);
+    ]));
   });
 
 /** Arrange from a photo or PDF of sheet music: Drini reads the page, then arranges it. */
 export const arrangeFromFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => fileInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { runDrini } = await import("./drini.server");
-    return runDrini([
+    return metered(context, () => runDrini([
       {
         role: "user",
         content: [
@@ -80,10 +97,11 @@ export const arrangeFromFile = createServerFn({ method: "POST" })
           { type: "file", data: data.data, mediaType: data.mediaType, filename: data.fileName },
         ],
       },
-    ]);
+    ]));
   });
 
 export const revise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => reviseInput.parse(d))
   .handler(async ({ data }) => {
     const { runDrini } = await import("./drini.server");
