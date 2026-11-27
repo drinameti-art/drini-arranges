@@ -76,9 +76,9 @@ function Landing() {
     L("Wind quartet", "Kuartet frymorësh"), L("Guitar", "Kitarë"), L("Lead sheet", "Lead sheet"),
   ];
   const plans = [
-    { name: L("Free", "Falas"), price: "€0", n: 3 },
-    { name: "Pro", price: "€29.99", n: 15, best: true },
-    { name: "Studio", price: "€59.99", n: 30 },
+    { name: L("Free", "Falas"), price: "€0", n: 3, week: false },
+    { name: "Pro", price: "€29.99", n: 15, best: true, week: true },
+    { name: "Studio", price: "€59.99", n: 30, week: false },
   ];
 
   return (
@@ -200,8 +200,8 @@ function Landing() {
           {plans.map((p) => (
             <div key={p.name} className={`card-paper p-6 ${p.best ? "border-primary/50 shadow-md" : ""}`}>
               <p className="font-display text-xl font-semibold text-ink">{p.name}</p>
-              <p className="mt-3 text-4xl font-semibold text-ink">{p.price}<span className="text-base font-normal text-graphite">{L(" / month", " / muaj")}</span></p>
-              <p className="mt-2 text-graphite">{L(`${p.n} arrangements a month`, `${p.n} aranzhime në muaj`)}</p>
+              <p className="mt-3 text-4xl font-semibold text-ink">{p.price}<span className="text-base font-normal text-graphite">{p.week ? L(" / week", " / javë") : L(" / month", " / muaj")}</span></p>
+              <p className="mt-2 text-graphite">{p.week ? L(`${p.n} arrangements a week`, `${p.n} aranzhime në javë`) : L(`${p.n} arrangements a month`, `${p.n} aranzhime në muaj`)}</p>
             </div>
           ))}
         </div>

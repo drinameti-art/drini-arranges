@@ -18,9 +18,9 @@ export const Route = createFileRoute("/pricing")({
 });
 
 const tiers = [
-  { name: "pr.free", blurb: "pr.freeBlurb", price: "€0", features: ["pr.f.free1", "pr.f.free2", "pr.f.free3", "pr.f.free4"], cta: "pr.current", featured: false },
-  { name: "pr.pro", blurb: "pr.proBlurb", price: "€29.99", features: ["pr.f.pro1", "pr.f.pro2", "pr.f.pro3", "pr.f.pro4"], cta: "pr.soon", featured: true },
-  { name: "pr.studio", blurb: "pr.studioBlurb", price: "€59.99", features: ["pr.f.st1", "pr.f.st2", "pr.f.st3", "pr.f.st4"], cta: "pr.soon", featured: false },
+  { name: "pr.free", blurb: "pr.freeBlurb", price: "€0", period: "pr.month", features: ["pr.f.free1", "pr.f.free2", "pr.f.free3", "pr.f.free4"], cta: "pr.current", featured: false },
+  { name: "pr.pro", blurb: "pr.proBlurb", price: "€29.99", period: "pr.week", features: ["pr.f.pro1", "pr.f.pro2", "pr.f.pro3", "pr.f.pro4"], cta: "pr.soon", featured: true },
+  { name: "pr.studio", blurb: "pr.studioBlurb", price: "€59.99", period: "pr.month", features: ["pr.f.st1", "pr.f.st2", "pr.f.st3", "pr.f.st4"], cta: "pr.soon", featured: false },
 ] as const;
 
 function Pricing() {
@@ -37,7 +37,7 @@ function Pricing() {
             <div key={tier.name} className={`flex flex-col rounded-[20px] border p-7 ${tier.featured ? "border-ink bg-ink text-cream" : "border-border bg-paper text-ink"}`}>
               <h2 className="text-2xl">{t(tier.name)}</h2>
               <p className={`mt-1 text-sm ${tier.featured ? "text-cream/70" : "text-graphite"}`}>{t(tier.blurb)}</p>
-              <p className="mt-6 font-display text-4xl font-semibold">{tier.price}<span className="text-base font-normal opacity-70"> {t("pr.month")}</span></p>
+              <p className="mt-6 font-display text-4xl font-semibold">{tier.price}<span className="text-base font-normal opacity-70"> {t(tier.period)}</span></p>
               <ul className="mt-6 flex-1 space-y-3 text-sm">
                 {tier.features.map((f) => <li key={f} className="flex gap-2"><Check className={`h-4 w-4 shrink-0 ${tier.featured ? "text-gold" : "text-primary"}`} />{t(f)}</li>)}
               </ul>
