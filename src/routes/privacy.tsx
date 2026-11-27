@@ -10,6 +10,7 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:title", content: "Privacy · DriniArranges" },
       { property: "og:description", content: "What DriniArranges stores and what is sent to create your arrangements." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Privacy,

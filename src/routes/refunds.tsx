@@ -10,6 +10,7 @@ export const Route = createFileRoute("/refunds")({
       { property: "og:title", content: "Refund policy · DriniArranges" },
       { property: "og:description", content: "How cancelling and refunds work for DriniArranges Pro and Studio." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Refunds,

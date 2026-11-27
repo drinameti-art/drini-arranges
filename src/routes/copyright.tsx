@@ -10,6 +10,7 @@ export const Route = createFileRoute("/copyright")({
       { property: "og:title", content: "Copyright · DriniArranges" },
       { property: "og:description", content: "The DriniArranges label, rights in original works, and how to report a problem." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Copyright,

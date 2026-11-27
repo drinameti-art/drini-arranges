@@ -10,6 +10,7 @@ export const Route = createFileRoute("/terms")({
       { property: "og:title", content: "Terms of use · DriniArranges" },
       { property: "og:description", content: "How DriniArranges may be used, and who owns the arrangements." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Terms,

@@ -61,12 +61,19 @@ function toRow(s: SavedScore, owner: string) {
   return { id: s.id, user_id: owner, title: s.title, ensemble: s.ensemble, level: s.level, key: s.key, meter: s.meter, bars: s.bars, abc: s.abc, notes: s.notes, created_at: new Date(s.createdAt).toISOString() };
 }
 function warn() { toast.error(tr("auth.syncError")); }
+const pendingKey = (owner: string) => `${KEY}:${owner}:pending`;
+function acknowledge(s: SavedScore, owner: string) {
+  const pending = read(pendingKey(owner));
+  write(pending.filter((p) => p.id !== s.id || JSON.stringify(p) !== JSON.stringify(s)), pendingKey(owner));
+}
 
 async function refreshLibrary(owner: string, version: number) {
   const { data, error } = await supabase.from("scores").select("*").eq("user_id", owner).order("created_at", { ascending: false }).limit(MAX);
   if (version !== generation || owner !== userId) return;
   if (error) { warn(); return; }
-  write((data ?? []).map(fromRow));
+  const pending = read(pendingKey(owner));
+  const pendingIds = new Set(pending.map((s) => s.id));
+  write([...pending, ...(data ?? []).map(fromRow).filter((s) => !pendingIds.has(s.id))].sort((a, b) => b.createdAt - a.createdAt));
 }
 
 /** Called only by the root account provider, never from an auth callback lock. */
@@ -90,6 +97,12 @@ export function setLibraryUser(owner: string | null): Promise<void> {
         localStorage.setItem(`${KEY}:migrated`, "1");
         write([], KEY);
       }
+      for (const score of read(pendingKey(owner))) {
+        if (version !== generation) return;
+        const { error } = await supabase.from("scores").upsert(toRow(score, owner), { onConflict: "id" });
+        if (error) throw error;
+        acknowledge(score, owner);
+      }
       await refreshLibrary(owner, version);
     } catch { warn(); }
   })();
@@ -103,13 +116,15 @@ export function saveScore(s: SavedScore) {
   const owner = userId;
   const version = generation;
   if (!owner) return;
+  write([s, ...read(pendingKey(owner)).filter((p) => p.id !== s.id)], pendingKey(owner));
   queue = queue.catch(() => {}).then(async () => {
     await ready;
     if (owner !== userId || version !== generation) return;
     const { error } = await supabase.from("scores").upsert(toRow(s, owner), { onConflict: "id" });
     if (error) { warn(); return; }
+    acknowledge(s, owner);
     await refreshLibrary(owner, version);
-  });
+  }).catch(warn);
 }
 
 export function findScore(id: string) {
@@ -119,11 +134,12 @@ export function findScore(id: string) {
   if (cached || !owner || misses.has(id)) return cached;
   misses.add(id);
   void ready.then(async () => {
+    if (owner !== userId || version !== generation) return;
     const { data, error } = await supabase.from("scores").select("*").eq("user_id", owner).eq("id", id).maybeSingle();
     if (owner !== userId || version !== generation) return;
     if (error) { misses.delete(id); warn(); return; }
     if (data) write([fromRow(data), ...loadLibrary().filter((s) => s.id !== id)]);
-  });
+  }).catch(() => { misses.delete(id); warn(); });
   return null;
 }
 
@@ -136,6 +152,8 @@ export async function deleteScore(id: string) {
     if (owner !== userId || version !== generation) return;
     const { error } = await supabase.from("scores").delete().eq("user_id", owner).eq("id", id);
     if (error) throw error;
+    if (owner !== userId || version !== generation) return;
+    write(read(pendingKey(owner)).filter((s) => s.id !== id), pendingKey(owner));
   }
   write(loadLibrary().filter((s) => s.id !== id));
 }

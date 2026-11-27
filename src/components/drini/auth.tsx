@@ -22,9 +22,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (alive && current === revision) setState({ user: data.user, ready: true });
     };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") window.dispatchEvent(new Event("drini:recovery"));
+      if (event === "PASSWORD_RECOVERY") {
+        sessionStorage.setItem("drini:password-recovery", "1");
+        window.dispatchEvent(new Event("drini:recovery"));
+      }
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED", "INITIAL_SESSION"].includes(event)) return;
       if (event === "SIGNED_OUT") {
+        sessionStorage.removeItem("drini:password-recovery");
         ++revision;
         void setLibraryUser(null);
         setState({ user: null, ready: true });
