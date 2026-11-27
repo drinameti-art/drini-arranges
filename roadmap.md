@@ -7,8 +7,9 @@
 Verification limitations: Google browser authorization, delivered signup/reset emails, and a real password recovery session were not exercised. Account and recovery calls were tested with mocked responses; storage was exercised with a real temporary account.
 
 # Paddle payments
-- [ ] Enable Lovable Payments with Paddle in the interactive Lovable editor. Blocker: payment setup is unavailable in this session; the owner must complete the setup form there.
-- [ ] After enablement, create EUR subscriptions: Pro €29.99 weekly and Studio €59.99 monthly; Free has no product.
-- [ ] Wire pricing and landing checkout, sign-in return to /pricing, and purchase-to-user matching. Blocker: Paddle setup must be enabled first.
-- [ ] Add signature-verified subscription updates and customer portal with EN/SQ text, preserving existing plan protection and limits. Blocker: Paddle setup must be enabled first.
-- [ ] Test preview checkout with Paddle test cards and confirm plan/renewal readback; guide verification, domain approval, and publishing. Blocker: enabled payment setup and successful preview testing are required first.
+- [x] Run the built-in payment eligibility check using the requested software subscriptions and declared seller country Kosovo (XK).
+- [ ] Enable Lovable Payments with Paddle. Blocker: the eligibility check returned NO BUILT-IN PAYMENTS, reporting this project ineligible for Paddle and built-in Stripe unavailable for XK; it explicitly prohibited enabling a built-in provider.
+- [ ] After enablement, create EUR subscriptions: Pro €29.99 weekly and Studio €59.99 monthly; Free has no product. Blocker: payment eligibility prevents enablement.
+- [ ] Wire pricing and landing checkout, sign-in return to /pricing, and purchase-to-user matching. Blocker: payment eligibility prevents enablement; no payment code may be implemented before enablement.
+- [ ] Add signature-verified subscription updates and customer portal with EN/SQ text, preserving existing plan protection and limits. Blocker: payment eligibility prevents enablement.
+- [ ] Test preview checkout with Paddle test cards and confirm plan/renewal readback; guide verification, domain approval, and publishing. Blocker: no enabled payment provider or checkout to test; app not published in this payments task.
