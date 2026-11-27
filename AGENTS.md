@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Keep the score library API synchronous; perform cloud synchronization behind account-scoped caches so existing arranging callers remain unchanged.
+- Own session state and the single auth subscriber in a root-mounted provider; keep public pages accessible and enforce score ownership with database RLS.
+- Link saved-score ownership to public profiles, which cascade from auth users, to follow managed schema boundaries.

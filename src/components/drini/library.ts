@@ -1,5 +1,9 @@
-// Arrangements saved in this browser (localStorage) until accounts and a database are added.
+// Synchronous public API, with account-scoped cloud synchronization behind the cache.
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { toast } from "sonner";
+import { tr } from "@/lib/i18n";
 
 export type SavedScore = {
   id: string;
@@ -17,34 +21,123 @@ export type SavedScore = {
 const KEY = "drini:library";
 const EVENT = "drini:library";
 const MAX = 50;
+let userId: string | null = null;
+let generation = 0;
+let ready: Promise<void> = Promise.resolve();
+let queue: Promise<unknown> = Promise.resolve();
+const misses = new Set<string>();
+const memory = new Map<string, SavedScore[]>();
+const cacheKey = () => userId ? `${KEY}:${userId}` : KEY;
 
-export function loadLibrary(): SavedScore[] {
+function read(key: string): SavedScore[] {
   try {
-    const raw = localStorage.getItem(KEY);
-    const list = raw ? (JSON.parse(raw) as SavedScore[]) : [];
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
-  }
+    const raw = localStorage.getItem(key);
+    const list: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list as SavedScore[] : [];
+  } catch { return memory.get(key) ?? []; }
 }
 
-function write(list: SavedScore[]) {
+export function loadLibrary(): SavedScore[] {
+  return read(cacheKey());
+}
+
+function write(list: SavedScore[], key = cacheKey()) {
+  memory.set(key, list.slice(0, MAX));
   try {
-    localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
-    window.dispatchEvent(new Event(EVENT));
-  } catch {
-    // storage full or blocked: the score still shows, it just isn't kept
-  }
+    localStorage.setItem(key, JSON.stringify(list.slice(0, MAX)));
+  } catch { /* Cache remains available in memory. */ }
+  window.dispatchEvent(new Event(EVENT));
+}
+
+type ScoreRow = Database["public"]["Tables"]["scores"]["Row"];
+function fromRow(row: ScoreRow): SavedScore {
+  const notes = Array.isArray(row.notes) ? row.notes.flatMap((note) => {
+    if (!note || typeof note !== "object" || Array.isArray(note)) return [];
+    return typeof note["bar"] === "number" && typeof note["text"] === "string" ? [{ bar: note["bar"], text: note["text"] }] : [];
+  }) : [];
+  return { id: row.id, title: row.title, ensemble: row.ensemble, level: row.level, key: row.key, meter: row.meter, bars: row.bars, abc: row.abc, notes, createdAt: Date.parse(row.created_at) };
+}
+function toRow(s: SavedScore, owner: string) {
+  return { id: s.id, user_id: owner, title: s.title, ensemble: s.ensemble, level: s.level, key: s.key, meter: s.meter, bars: s.bars, abc: s.abc, notes: s.notes, created_at: new Date(s.createdAt).toISOString() };
+}
+function warn() { toast.error(tr("auth.syncError")); }
+
+async function refreshLibrary(owner: string, version: number) {
+  const { data, error } = await supabase.from("scores").select("*").eq("user_id", owner).order("created_at", { ascending: false }).limit(MAX);
+  if (version !== generation || owner !== userId) return;
+  if (error) { warn(); return; }
+  write((data ?? []).map(fromRow));
+}
+
+/** Called only by the root account provider, never from an auth callback lock. */
+export function setLibraryUser(owner: string | null): Promise<void> {
+  if (owner === userId) return ready;
+  userId = owner;
+  const version = ++generation;
+  misses.clear();
+  window.dispatchEvent(new Event(EVENT));
+  ready = (async () => {
+    if (!owner) return;
+    try {
+      // Move browser-only scores once; never copy a different account's cache.
+      if (!localStorage.getItem(`${KEY}:migrated`)) {
+        const guest = read(KEY);
+        if (guest.length) {
+          const { error } = await supabase.from("scores").upsert(guest.map((s) => toRow(s, owner)), { onConflict: "id" });
+          if (error) throw error;
+        }
+        if (version !== generation) return;
+        localStorage.setItem(`${KEY}:migrated`, "1");
+        write([], KEY);
+      }
+      await refreshLibrary(owner, version);
+    } catch { warn(); }
+  })();
+  return ready;
 }
 
 /** Adds a new score, or updates it in place when the id already exists. */
 export function saveScore(s: SavedScore) {
   const list = loadLibrary().filter((x) => x.id !== s.id);
   write([s, ...list]);
+  const owner = userId;
+  const version = generation;
+  if (!owner) return;
+  queue = queue.catch(() => {}).then(async () => {
+    await ready;
+    if (owner !== userId || version !== generation) return;
+    const { error } = await supabase.from("scores").upsert(toRow(s, owner), { onConflict: "id" });
+    if (error) { warn(); return; }
+    await refreshLibrary(owner, version);
+  });
 }
 
 export function findScore(id: string) {
-  return loadLibrary().find((s) => s.id === id) ?? null;
+  const cached = loadLibrary().find((s) => s.id === id) ?? null;
+  const owner = userId;
+  const version = generation;
+  if (cached || !owner || misses.has(id)) return cached;
+  misses.add(id);
+  void ready.then(async () => {
+    const { data, error } = await supabase.from("scores").select("*").eq("user_id", owner).eq("id", id).maybeSingle();
+    if (owner !== userId || version !== generation) return;
+    if (error) { misses.delete(id); warn(); return; }
+    if (data) write([fromRow(data), ...loadLibrary().filter((s) => s.id !== id)]);
+  });
+  return null;
+}
+
+export async function deleteScore(id: string) {
+  const owner = userId;
+  const version = generation;
+  if (owner) {
+    await ready;
+    await queue;
+    if (owner !== userId || version !== generation) return;
+    const { error } = await supabase.from("scores").delete().eq("user_id", owner).eq("id", id);
+    if (error) throw error;
+  }
+  write(loadLibrary().filter((s) => s.id !== id));
 }
 
 export function newId() {

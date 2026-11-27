@@ -1,7 +1,13 @@
 import { Footer } from "./Legal";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, UserRound, LogOut } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { useAccount } from "./auth";
 import { Logo } from "./Logo";
 import { useLang } from "@/lib/i18n";
 import { FREE_PER_MONTH, useFreeLeft } from "./usage";
@@ -35,6 +41,21 @@ function ThemeToggle() {
 export function TopBar() {
   const { t, lang, setLang } = useLang();
   const left = useFreeLeft();
+  const { user } = useAccount();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+  async function signOut() {
+    setSigningOut(true);
+    try {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      await navigate({ to: "/login", replace: true });
+    } catch { toast.error(t("auth.signOutError")); }
+    finally { setSigningOut(false); }
+  }
   return (
     <header className="border-b border-border bg-paper">
       <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-4 px-4 py-3 md:px-6">
@@ -73,6 +94,15 @@ export function TopBar() {
           </div>
           <ThemeToggle />
           <Link to="/pricing" className="btn btn-outline hidden sm:inline-flex">{t("upgrade")}</Link>
+          {user ? <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="btn btn-ghost h-11 w-11 rounded-full" aria-label={t("auth.account")}><UserRound className="h-4 w-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="card-paper max-w-[calc(100vw-2rem)] text-ink">
+              <DropdownMenuLabel className="max-w-64 break-all text-sm font-normal">{user.email}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild><Link to="/scores">{t("nav.scores")}</Link></DropdownMenuItem>
+              <DropdownMenuItem disabled={signingOut} onSelect={() => void signOut()}><LogOut />{t("auth.signOut")}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu> : <Button asChild variant="ghost" className="btn btn-ghost"><Link to="/login">{t("auth.signIn")}</Link></Button>}
         </div>
       </div>
     </header>

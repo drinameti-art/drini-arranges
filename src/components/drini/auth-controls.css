@@ -1,0 +1,13 @@
+/* Provider-required neutral branding, scoped to the Google control only. */
+.google-sign-in {
+  --google-background: #f2f2f2;
+  --google-foreground: #1f1f1f;
+  background: var(--google-background);
+  color: var(--google-foreground);
+  border: 0;
+  gap: 10px;
+  padding-inline: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}

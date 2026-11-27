@@ -7,7 +7,7 @@ import { ArrangeForm } from "@/components/drini/ArrangeForm";
 import { ScoreCard } from "@/components/drini/ScoreCard";
 import { DriniChat } from "@/components/drini/DriniChat";
 import { useDrini } from "@/components/drini/useDrini";
-import { findScore } from "@/components/drini/library";
+import { findScore, useLibrary } from "@/components/drini/library";
 import { findTemplate, templateText } from "@/components/drini/templates";
 import { useLang } from "@/lib/i18n";
 import { DriniProgress } from "@/components/drini/DriniProgress";
@@ -39,6 +39,7 @@ function Studio() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/studio" });
   const drini = useDrini();
+  const library = useLibrary();
   const template = search.template ? findTemplate(search.template) : null;
   const { t, lang } = useLang();
   const preset = template ? { id: template.id, title: templateText(template, lang).title, request: template.request } : null;
@@ -58,9 +59,10 @@ function Studio() {
   useEffect(() => {
     if (handedOff.current) return;
     if (search.open) {
-      handedOff.current = true;
       const saved = findScore(search.open);
-      if (saved) void drini.open(saved);
+      if (!saved) return; // Account cache may still be loading from Cloud.
+      handedOff.current = true;
+      void drini.open(saved);
       void navigate({ search: {}, replace: true });
       return;
     }
@@ -69,7 +71,7 @@ function Studio() {
     void arrange();
     void navigate({ search: { tab: "audio" }, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [library, search.open]);
 
   return (
     <PageShell>
