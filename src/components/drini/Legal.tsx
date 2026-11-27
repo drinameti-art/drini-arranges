@@ -44,6 +44,7 @@ export function Footer() {
           <Link to="/terms" className="hover:text-ink">{sq ? "Kushtet e përdorimit" : "Terms"}</Link>
           <Link to="/privacy" className="hover:text-ink">{sq ? "Privatësia" : "Privacy"}</Link>
           <Link to="/copyright" className="hover:text-ink">{sq ? "Të drejtat e autorit" : "Copyright"}</Link>
+          <Link to="/refunds" className="hover:text-ink">{sq ? "Rimbursimet" : "Refunds"}</Link>
           <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-ink">{sq ? "Kontakt" : "Contact"}</a>
         </nav>
       </div>

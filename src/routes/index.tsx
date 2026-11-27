@@ -15,7 +15,13 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "DriniArranges — your music, arranged" },
       { property: "og:description", content: "Describe a piece, hum a melody or upload sheet music, and Drini writes a real, playable score for your ensemble." },
       { property: "og:type", content: "website" },
+      // preview card for shared links (WhatsApp, Instagram, Facebook); becomes a full address once the site has its domain
+      { property: "og:image", content: "/og.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "DriniArranges — Your music, arranged." },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "/og.png" },
     ],
   }),
   component: Landing,
