@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useLang } from "@/lib/i18n";
+import { loginDestination } from "@/lib/paddle-rules";
 import "@/components/drini/auth-controls.css";
 
 export const Route = createFileRoute("/login")({
@@ -34,7 +35,7 @@ function Login() {
     if (!ready || !user) return;
     let back: string | null = new URLSearchParams(window.location.search).get("redirect");
     try { back = back ?? sessionStorage.getItem("drini:after-login"); sessionStorage.removeItem("drini:after-login"); } catch { /* ignore */ }
-    void navigate({ to: back === "/studio" ? "/studio" : "/scores", replace: true });
+    void navigate({ to: loginDestination(back), replace: true });
   }, [ready, user, navigate]);
   const changeMode = (next: typeof mode) => { setMode(next); setMessage(""); };
   async function submit(event: FormEvent) {
@@ -59,6 +60,8 @@ function Login() {
   async function google() {
     setBusy(true); setMessage("");
     try {
+      const destination = new URLSearchParams(window.location.search).get("redirect");
+      if (destination === "/pricing" || destination === "/studio") sessionStorage.setItem("drini:after-login", destination);
       const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/login` });
       if (result.error) setMessage(t("auth.error"));
     } catch { setMessage(t("auth.error")); }

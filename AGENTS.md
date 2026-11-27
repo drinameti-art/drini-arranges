@@ -33,4 +33,7 @@ use the editor.
 - Own session state and the single auth subscriber in a root-mounted provider; keep public pages accessible and enforce score ownership with database RLS.
 - Link saved-score ownership to public profiles, which cascade from auth users, to follow managed schema boundaries.
 - Plan limits are enforced in server functions (src/lib/plan-limits.ts rules, usage.server.ts DB access); usage rows are inserted only with the service role after a successful AI result, so the browser cannot reset or inflate counts.
-- Plan columns on profiles are writable only by the service role (column grant + trigger), ready for a future Paddle webhook.
+- Plan and billing-reference columns on profiles are writable only by the service role (column grants + triggers); Paddle webhooks atomically apply verified subscription changes.
+- Custom Paddle Billing uses authenticated server-created transactions and customer ownership matching, never browser checkout success as proof of entitlement; raw signed webhooks are the only payment-to-plan authority.
+- Keep Paddle catalogs and subscription event ordering durable and environment-scoped; catalog leases avoid concurrent setup and atomic event processing ignores duplicates/stale events without canceling another active subscription.
+- Load Paddle.js dynamically on a checkout gesture and initialize it once per page; retain past-due access during Paddle payment recovery until the subscription is effectively paused or canceled.

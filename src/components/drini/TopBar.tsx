@@ -1,7 +1,9 @@
 import { Footer } from "./Legal";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Moon, Sun, UserRound, LogOut } from "lucide-react";
+import { Moon, Sun, UserRound, LogOut, CreditCard } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { openPaddlePortal } from "@/lib/paddle.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,21 @@ export function TopBar() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
+  const portal = useServerFn(openPaddlePortal);
+  async function manageSubscription() {
+    setOpeningPortal(true);
+    // Open synchronously on the gesture so browsers don't block the new tab.
+    const tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+    try {
+      const result = await portal();
+      if (!result.ok) throw new Error("Portal unavailable");
+      if (tab) tab.location.href = result.url;
+      else window.location.assign(result.url);
+    } catch { tab?.close(); toast.error(t("pay.portalError")); }
+    finally { setOpeningPortal(false); }
+  }
   async function signOut() {
     setSigningOut(true);
     try {
@@ -101,6 +118,7 @@ export function TopBar() {
               <DropdownMenuLabel className="max-w-64 break-all text-sm font-normal">{user.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link to="/scores">{t("nav.scores")}</Link></DropdownMenuItem>
+              {left && left.plan !== "free" && <DropdownMenuItem disabled={openingPortal} onSelect={() => void manageSubscription()}><CreditCard />{t("pay.manage")}</DropdownMenuItem>}
               <DropdownMenuItem disabled={signingOut} onSelect={() => void signOut()}><LogOut />{t("auth.signOut")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu> : <Button asChild variant="ghost" className="btn btn-ghost"><Link to="/login">{t("auth.signIn")}</Link></Button>}

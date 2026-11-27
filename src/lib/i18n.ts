@@ -7,6 +7,17 @@ const KEY = "drini:lang";
 const EVENT = "drini:lang";
 
 const en = {
+  "pay.subscribe": "Subscribe to {plan}",
+  "pay.opening": "Opening checkout…",
+  "pay.confirming": "Confirming subscription…",
+  "pay.success": "Payment received. Your subscription is being confirmed.",
+  "pay.active": "Your subscription is active. Your plan has been refreshed.",
+  "pay.pending": "Your subscription is still being confirmed. Please refresh shortly.",
+  "pay.error": "I couldn't open payments. Please try again, or contact us.",
+  "pay.unconfigured": "Payments aren't ready yet. Please try again later.",
+  "pay.manage": "Manage subscription",
+  "pay.usePortal": "Manage from your account menu",
+  "pay.portalError": "I couldn't open your subscription. Please try again.",
   "auth.signIn": "Sign in",
   "auth.signUp": "Sign up",
   "auth.email": "Email",
@@ -216,7 +227,7 @@ const en = {
   "pr.week": "/ week",
   "pr.soon": "Coming soon",
   "pr.current": "Current plan",
-  "pr.note": "Payments aren't switched on yet. Prices are in euros.",
+  "pr.note": "Prices are in euros. Subscriptions renew automatically; manage or cancel from your account menu.",
   "nav.mArrange": "Arrange",
   "nav.mScore": "Score",
   "nav.mChat": "Chat",
@@ -247,6 +258,17 @@ const en = {
 type Key = keyof typeof en;
 
 const sq: Record<Key, string> = {
+  "pay.subscribe": "Abonohu në {plan}",
+  "pay.opening": "Po hap pagesën…",
+  "pay.confirming": "Po konfirmoj abonimin…",
+  "pay.success": "Pagesa u pranua. Abonimi yt po konfirmohet.",
+  "pay.active": "Abonimi yt është aktiv. Paketa jote u përditësua.",
+  "pay.pending": "Abonimi yt ende po konfirmohet. Rifresko së shpejti.",
+  "pay.error": "Nuk munda ta hap pagesën. Provo sërish ose na kontakto.",
+  "pay.unconfigured": "Pagesat ende nuk janë gati. Provo më vonë.",
+  "pay.manage": "Menaxho abonimin",
+  "pay.usePortal": "Menaxho nga menyja e llogarisë",
+  "pay.portalError": "Nuk munda ta hap abonimin tënd. Provo sërish.",
   "auth.signIn": "Hyr",
   "auth.signUp": "Regjistrohu",
   "auth.email": "Email",
@@ -456,7 +478,7 @@ const sq: Record<Key, string> = {
   "pr.week": "/ javë",
   "pr.soon": "Së shpejti",
   "pr.current": "Plani aktual",
-  "pr.note": "Pagesat ende nuk janë aktivizuar. Çmimet janë në euro.",
+  "pr.note": "Çmimet janë në euro. Abonimet rinovohen automatikisht; menaxhoji ose anuloji nga menyja e llogarisë.",
   "nav.mArrange": "Aranzho",
   "nav.mScore": "Partitura",
   "nav.mChat": "Chat",

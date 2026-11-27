@@ -1,0 +1,3 @@
+CREATE FUNCTION public.apply_paddle_billing(p_payload jsonb) RETURNS text LANGUAGE plpgsql SET search_path=public AS $$ BEGIN RETURN public.apply_paddle_subscription(p_payload->>'event_id',(p_payload->>'occurred_at')::timestamptz,(p_payload->>'user_id')::uuid,p_payload->>'environment',p_payload->>'customer_id',p_payload->>'subscription_id',p_payload->>'plan',p_payload->>'status',(p_payload->>'next_billed_at')::timestamptz); END $$;
+REVOKE ALL ON FUNCTION public.apply_paddle_billing(jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.apply_paddle_billing(jsonb) TO service_role;

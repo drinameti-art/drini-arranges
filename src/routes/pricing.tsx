@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { PageShell } from "@/components/drini/TopBar";
 import { useLang } from "@/lib/i18n";
+import { PaddleCheckoutButton } from "@/components/drini/PaddleCheckout";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -41,7 +43,8 @@ function Pricing() {
               <ul className="mt-6 flex-1 space-y-3 text-sm">
                 {tier.features.map((f) => <li key={f} className="flex gap-2"><Check className={`h-4 w-4 shrink-0 ${tier.featured ? "text-gold" : "text-primary"}`} />{t(f)}</li>)}
               </ul>
-              <button disabled className={`btn mt-8 ${tier.featured ? "btn-primary" : "btn-outline"} disabled:cursor-default disabled:opacity-70`}>{t(tier.cta)}</button>
+              {tier.name === "pr.free" ? <Button variant="ghost" disabled className="btn btn-outline mt-8 disabled:cursor-default disabled:opacity-70">{t(tier.cta)}</Button> :
+                <PaddleCheckoutButton plan={tier.name === "pr.pro" ? "pro" : "studio"} className={`btn mt-8 ${tier.featured ? "btn-primary" : "btn-outline"}`} />}
             </div>
           ))}
         </div>

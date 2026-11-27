@@ -43,12 +43,101 @@ export type Database = {
           },
         ]
       }
+      paddle_catalog: {
+        Row: {
+          environment: string
+          lease_token: string | null
+          lease_until: string | null
+          plan: string
+          price_id: string | null
+          product_id: string | null
+        }
+        Insert: {
+          environment: string
+          lease_token?: string | null
+          lease_until?: string | null
+          plan: string
+          price_id?: string | null
+          product_id?: string | null
+        }
+        Update: {
+          environment?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          plan?: string
+          price_id?: string | null
+          product_id?: string | null
+        }
+        Relationships: []
+      }
+      paddle_events: {
+        Row: {
+          event_id: string
+          occurred_at: string
+          received_at: string
+        }
+        Insert: {
+          event_id: string
+          occurred_at: string
+          received_at?: string
+        }
+        Update: {
+          event_id?: string
+          occurred_at?: string
+          received_at?: string
+        }
+        Relationships: []
+      }
+      paddle_subscriptions: {
+        Row: {
+          customer_id: string
+          environment: string
+          event_at: string
+          id: string
+          next_billed_at: string | null
+          plan: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          customer_id: string
+          environment: string
+          event_at: string
+          id: string
+          next_billed_at?: string | null
+          plan: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          customer_id?: string
+          environment?: string
+          event_at?: string
+          id?: string
+          next_billed_at?: string | null
+          plan?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paddle_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          paddle_customer_id: string | null
+          paddle_environment: string | null
+          paddle_subscription_id: string | null
           plan: string
           plan_renews_at: string | null
         }
@@ -57,6 +146,9 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          paddle_customer_id?: string | null
+          paddle_environment?: string | null
+          paddle_subscription_id?: string | null
           plan?: string
           plan_renews_at?: string | null
         }
@@ -65,6 +157,9 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          paddle_customer_id?: string | null
+          paddle_environment?: string | null
+          paddle_subscription_id?: string | null
           plan?: string
           plan_renews_at?: string | null
         }
@@ -128,7 +223,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_paddle_billing: { Args: { p_payload: Json }; Returns: string }
+      apply_paddle_subscription: {
+        Args: {
+          p_customer_id: string
+          p_environment: string
+          p_event_id: string
+          p_next_billed_at: string
+          p_occurred_at: string
+          p_plan: string
+          p_status: string
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      claim_paddle_catalog: {
+        Args: { p_environment: string; p_plan: string; p_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

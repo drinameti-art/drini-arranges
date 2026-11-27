@@ -6,6 +6,7 @@ import { LogoMark, Spark } from "@/components/drini/Logo";
 import { ScoreSheet, type ScoreSheetHandle } from "@/components/drini/ScoreSheet";
 import { DEMOS } from "@/components/drini/demo";
 import { useLang } from "@/lib/i18n";
+import { PaddleCheckoutButton } from "@/components/drini/PaddleCheckout";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,13 +16,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "DriniArranges — your music, arranged" },
       { property: "og:description", content: "Describe a piece, hum a melody or upload sheet music, and Drini writes a real, playable score for your ensemble." },
       { property: "og:type", content: "website" },
-      // preview card for shared links (WhatsApp, Instagram, Facebook); becomes a full address once the site has its domain
-      { property: "og:image", content: "/og.png" },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "DriniArranges — Your music, arranged." },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "/og.png" },
     ],
   }),
   component: Landing,
@@ -202,6 +197,7 @@ function Landing() {
               <p className="font-display text-xl font-semibold text-ink">{p.name}</p>
               <p className="mt-3 text-4xl font-semibold text-ink">{p.price}<span className="text-base font-normal text-graphite">{p.week ? L(" / week", " / javë") : L(" / month", " / muaj")}</span></p>
               <p className="mt-2 text-graphite">{p.week ? L(`${p.n} arrangements a week`, `${p.n} aranzhime në javë`) : L(`${p.n} arrangements a month`, `${p.n} aranzhime në muaj`)}</p>
+              {p.name === "Pro" || p.name === "Studio" ? <PaddleCheckoutButton plan={p.name === "Pro" ? "pro" : "studio"} /> : null}
             </div>
           ))}
         </div>

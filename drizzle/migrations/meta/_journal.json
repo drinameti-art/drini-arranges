@@ -29,6 +29,20 @@
       "when": 1795787569384,
       "tag": "0003_lock_usage_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795796915128,
+      "tag": "0004_custom_paddle_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795797038908,
+      "tag": "0005_paddle_nullable_renewal",
+      "breakpoints": true
     }
   ]
 }
